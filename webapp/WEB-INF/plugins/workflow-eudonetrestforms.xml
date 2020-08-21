@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?><plug-in>
+    <!-- Plugin Informations -->
+    <name>workflow-eudonetrestforms</name>
+    <class>fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.service.EudonetRestFormsPlugin</class>
+    <version>1.0.0</version>
+    <documentation/>
+    <installation/>
+    <changes/>
+    <user-guide/>
+    <description>module.workflow.eudonetrestforms.module.description</description>
+    <provider>module.workflow.eudonetrestforms.module.provider</provider>
+    <provider-url>http://lutece.paris.fr</provider-url>
+    <icon-url>images/admin/skin/plugins/forms/modules/eudonetrestforms/directory-eudonetrestforms.png</icon-url>
+    <copyright>Copyright 2001-2012 Mairie de Paris</copyright>
+	<core-version-dependency>
+		<min-core-version>4.0.0</min-core-version>
+		<max-core-version/>	
+	</core-version-dependency>
+	
+	<!-- if the plugin must have a connection pool with parameter : 1 - yes, 0 - no -->	
+    <db-pool-required>1</db-pool-required>
+    
+    <daemons>
+        <daemon>
+            <daemon-id>purgeResourceDaemon</daemon-id>
+            <daemon-name>module.workflow.eudonetrestforms.daemon.purgeResourceDaemon.name</daemon-name>
+            <daemon-description>module.workflow.eudonetrestforms.daemon.purgeResourceDaemon.description</daemon-description>
+            <daemon-class>fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.service.daemon.PurgeResourceDaemon</daemon-class>
+        </daemon>
+    </daemons>
+
+</plug-in>
