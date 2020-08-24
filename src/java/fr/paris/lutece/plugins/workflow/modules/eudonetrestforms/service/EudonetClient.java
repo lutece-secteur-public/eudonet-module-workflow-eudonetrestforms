@@ -71,10 +71,8 @@ public class EudonetClient
      */
     public ClientResponse createRecord( String strAuthenticate, String strIdTable, String strBodyJson )
     {
-    	throw new RuntimeException("Not Implemented");
-    	// TODO
-//        return _webResource.path( "CUD" ).path( strIdTable ).header( "x-auth", strAuthenticate ).type( MediaType.APPLICATION_JSON )
-//                .accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class, strBodyJson );
+        return _webResource.path( "CUD" ).path( strIdTable ).header( "x-auth", strAuthenticate ).type( MediaType.APPLICATION_JSON )
+                .accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class, strBodyJson );
     }
 
     /**
@@ -163,10 +161,8 @@ public class EudonetClient
      */
     public ClientResponse addAnnexes( String strAuthenticate, String strBodyJson )
     {
-    	throw new RuntimeException("Not Implemented");
-    	// TODO
-//        return _webResource.path( "Annexes/Add" ).header( "x-auth", strAuthenticate ).type( MediaType.APPLICATION_JSON ).accept( MediaType.APPLICATION_JSON )
-//                .post( ClientResponse.class, strBodyJson );
+        return _webResource.path( "Annexes/Add" ).header( "x-auth", strAuthenticate ).type( MediaType.APPLICATION_JSON ).accept( MediaType.APPLICATION_JSON )
+                .post( ClientResponse.class, strBodyJson );
     }
 
     /**

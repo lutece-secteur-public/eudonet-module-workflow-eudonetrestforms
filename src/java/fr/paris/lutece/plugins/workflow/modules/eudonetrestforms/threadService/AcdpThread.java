@@ -2,13 +2,13 @@ package fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.threadService;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.sun.jersey.api.client.ClientResponse;
 
+import fr.paris.lutece.plugins.forms.business.Form;
+import fr.paris.lutece.plugins.forms.business.FormHome;
 import fr.paris.lutece.plugins.forms.business.FormResponse;
 import fr.paris.lutece.plugins.forms.business.FormResponseHome;
-import fr.paris.lutece.plugins.forms.service.FormsPlugin;
 import fr.paris.lutece.plugins.managewferror.business.Resource;
 import fr.paris.lutece.plugins.managewferror.business.service.IProcessTaskErrorService;
 import fr.paris.lutece.plugins.managewferror.business.service.ProcessTaskErrorService;
@@ -19,8 +19,6 @@ import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.service.BuildJs
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.service.EudonetClient;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.service.EudonetRestWsService;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.utils.EudonetRestException;
-import fr.paris.lutece.portal.service.plugin.Plugin;
-import fr.paris.lutece.portal.service.plugin.PluginService;
 import fr.paris.lutece.portal.service.util.AppLogService;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -34,7 +32,7 @@ public class AcdpThread extends Thread
     private EudonetRestWsService _eudonetRestWsService;
     private List<EudonetRestData> _listEuData;
     private int _nIdResource;
-    private int _nIdFormResponse;
+    private int _nIdForm;
     private int _nIdAction;
     private EudonetRestException _eudonetException;
     private boolean _bRunning;
@@ -47,16 +45,16 @@ public class AcdpThread extends Thread
      * @param client
      * @param service
      * @param listEuData
-     * @param idFormResponse
+     * @param idForm
      * @param idResource
      */
-    public AcdpThread( EudonetClient client, EudonetRestWsService service, List<EudonetRestData> listEuData, int idFormResponse, int idResource, int idAction )
+    public AcdpThread( EudonetClient client, EudonetRestWsService service, List<EudonetRestData> listEuData, int idForm, int idResource, int idAction )
     {
         _client = client;
         _eudonetRestWsService = service;
         _listEuData = listEuData;
         _nIdResource = idResource;
-        _nIdFormResponse = idFormResponse;
+        _nIdForm = idForm;
         _nIdAction = idAction;
         setName( THREAD_NAME + _nIdResource );
     }
@@ -72,7 +70,7 @@ public class AcdpThread extends Thread
         boolean bErrorRecordLink = false;
 
         FormResponse formResponse = FormResponseHome.findByPrimaryKey( _nIdResource );
-
+        
         Resource gfaResourceDTO = getResourceDTO( formResponse );
         fr.paris.lutece.plugins.managewferror.business.Error error = gfaResourceDTO.getError( ).get( 0 );
 
@@ -85,8 +83,8 @@ public class AcdpThread extends Thread
 
             if ( strToken != null )
             {
-                createRecords( strToken, bErrorRecord );
-                createRecordsLink( strToken, bErrorRecordLink );
+                createRecordsLink( strToken, bErrorRecord, false);
+                createRecordsLink( strToken, bErrorRecordLink, true );
 
                 bError = bErrorRecord && bErrorRecordLink;
             }
@@ -177,16 +175,19 @@ public class AcdpThread extends Thread
         return null;
     }
 
-    public void createRecords( String strToken, boolean bError )
+    public void createRecordsLink( String strToken, boolean bError, boolean tableLink )
     {
         if ( strToken != null )
         {
-            List<Integer> idTableList = getTableListNotLink( strToken );
+            List<Integer> idTableList = tableLink ? getTableListLink( strToken ) : getTableListNotLink( strToken );
             for ( Integer i : idTableList )
             {
+                List<Integer> idTableListLinked = getTableListLinked( strToken, i );
+
                 try
                 {
-                    String strJsonBody = BuildJsonBodyService.getService( ).getCreateRecordJsonBody( i, _listEuData, _nIdResource, _nIdFormResponse );
+                    String strJsonBody = BuildJsonBodyService.getService( ).getCreateRecordJsonBodyLink( i, _listEuData, _nIdResource, _nIdForm,
+                            idTableListLinked );
                     ClientResponse response = _client.createRecord( strToken, "" + i, strJsonBody );
                     if ( response.getStatus( ) == 200 )
                     {
@@ -213,58 +214,6 @@ public class AcdpThread extends Thread
                                 eudonetLink.setIdTableLink( "" );
 
                                 EudonetLinkHome.create( eudonetLink );
-                            }
-                            // String strErrorMessage = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "ErrorMessage" );
-                            AppLogService.info( "Succes Creation - FileId : " + strFileId );
-                        }
-                        else
-                        {
-                            String strErrorMessage = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "ErrorMessage" );
-                            AppLogService.error( "Error Eudonet : " + strErrorMessage );
-                            bError = true;
-                        }
-                    }
-                }
-                catch( Exception ex )
-                {
-                    AppLogService.error( "Erreur to create table : " + i, ex );
-                    bError = true;
-                }
-            }
-        }
-    }
-
-    public void createRecordsLink( String strToken, boolean bError )
-    {
-        if ( strToken != null )
-        {
-            List<Integer> idTableList = getTableListLink( strToken );
-            for ( Integer i : idTableList )
-            {
-                List<Integer> idTableListLinked = getTableListLinked( strToken, i );
-
-                try
-                {
-                    String strJsonBody = BuildJsonBodyService.getService( ).getCreateRecordJsonBodyLink( i, _listEuData, _nIdResource, _nIdFormResponse,
-                            idTableListLinked );
-                    ClientResponse response = _client.createRecord( strToken, "" + i, strJsonBody );
-                    if ( response.getStatus( ) == 200 )
-                    {
-                        String strResponse = response.getEntity( String.class );
-                        JSONObject jsonObject = new JSONObject( );
-                        jsonObject.accumulate( "object", strResponse );
-
-                        String strStatus = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "Success" );
-
-                        if ( strStatus.equals( "true" ) )
-                        {
-                            String strFileId = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultData" ).getString( "FileId" );
-                            if ( strFileId != null && !strFileId.isEmpty( ) )
-                            {
-                                Integer nFileId = Integer.parseInt( strFileId );
-
-                                if ( isAnnexed( i ) )
-                                    createAnnexes( strToken, nFileId, i, bError );
                             }
 
                             AppLogService.info( "Succes Creation - FileId : " + strFileId );
@@ -293,7 +242,7 @@ public class AcdpThread extends Thread
         {
             try
             {
-                JSONArray jSONArray = BuildJsonBodyService.getService( ).getCreateAnnexeJsonBody( nIdFile, nIdTable, _listEuData, _nIdResource, _nIdFormResponse );
+                JSONArray jSONArray = BuildJsonBodyService.getService( ).getCreateAnnexeJsonBody( nIdFile, nIdTable, _listEuData, _nIdResource, _nIdForm );
                 for ( int index = 0; index < jSONArray.size( ); index++ )
                 {
                     JSONObject jObject = jSONArray.getJSONObject( index );
@@ -354,8 +303,7 @@ public class AcdpThread extends Thread
         for ( EudonetRestData eudonetRestData : _listEuData )
         {
             String strIdTableLink = eudonetRestData.getIdTableLink( ).split( "-" ) [0];
-            String strIdTable = eudonetRestData.getIdTable( ).split( "-" ) [0];
-            if ( !strIdTableLink.isEmpty( ) && strIdTable.equals( "" + nIdTable ) )
+            if ( !strIdTableLink.isEmpty( ) && strIdTableLink.equals( "" + nIdTable ) )
             {
                 return true;
             }
@@ -440,14 +388,6 @@ public class AcdpThread extends Thread
         List<Integer> idTableListNotLink = getTableListNotLink( strToken );
         
         idTableListDistinct.removeAll(idTableListNotLink);
-        
-//        for ( Integer i : idTableListNotLink )
-//        {
-//            if ( idTableListDistinct.contains( i ) )
-//            {
-//                idTableListDistinct.remove( i );
-//            }
-//        }
 
         return idTableListDistinct;
     }
@@ -459,6 +399,11 @@ public class AcdpThread extends Thread
         resource.setAction( _nIdAction );
         resource.setDescription( ACTION );
         resource.setStatus( Resource.STATUS_KO );
+        
+        Form form = FormHome.findByPrimaryKey(_nIdForm);
+        if (form != null) {
+        	resource.setIdWorkflow( form.getIdWorkflow() );
+        }
 
         List<fr.paris.lutece.plugins.managewferror.business.Error> listError = new ArrayList<fr.paris.lutece.plugins.managewferror.business.Error>( );
         fr.paris.lutece.plugins.managewferror.business.Error error = new fr.paris.lutece.plugins.managewferror.business.Error( );

@@ -12,7 +12,7 @@ public class EudonetLinkDAO implements IEudonetLinkDAO
     private static final String SQL_QUERY_SELECT_ALL_BY_RESOURCE_TABLE = "SELECT id, id_ressource, id_field, id_table, id_table_link FROM task_eudonetrest_table_link WHERE id_ressource = ? AND id_table = ? ;";
     private static final String SQL_QUERY_SELECT_ALL = "SELECT id, id_ressource, id_field, id_table, id_table_link FROM task_eudonetrest_table_link ;";
     private static final String SQL_QUERY_SELECT_ALL_BY_RESOURCE = "SELECT id, id_ressource, id_field, id_table, id_table_link FROM task_eudonetrest_table_link WHERE id_ressource = ? ;";
-    private static final String SQL_QUERY_SELECT_BY = "SELECT id, id_ressource, id_field, id_table, id_table_link FROM task_eudonetrest_table_link WHERE id_ressource = ? AND id_table = ? ;";
+    private static final String SQL_QUERY_SELECT_BY = "SELECT id, id_ressource, id_field, id_table, id_table_link FROM task_eudonetrest_table_link WHERE id_ressource = ? AND id_table = ? ORDER BY ID DESC;";
     private static final String SQL_QUERY_SELECT = "SELECT id, id_ressource, id_field, id_table, id_table_link FROM task_eudonetrest_table_link WHERE id = ? ;";
     private static final String SQL_QUERY_INSERT = "INSERT INTO task_eudonetrest_table_link ( id, id_ressource, id_field, id_table, id_table_link ) VALUES ( ?, ?, ?, ?, ? );";
     private static final String SQL_QUERY_DELETE = "DELETE FROM task_eudonetrest_table_link WHERE id = ? ;";

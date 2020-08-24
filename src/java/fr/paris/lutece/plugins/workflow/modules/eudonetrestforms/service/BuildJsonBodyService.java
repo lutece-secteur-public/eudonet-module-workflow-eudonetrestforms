@@ -1,14 +1,15 @@
 package fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.service;
 
-import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 
 import fr.paris.lutece.plugins.forms.business.FormQuestionResponse;
 import fr.paris.lutece.plugins.forms.business.FormQuestionResponseHome;
@@ -16,7 +17,6 @@ import fr.paris.lutece.plugins.forms.business.FormResponse;
 import fr.paris.lutece.plugins.forms.business.FormResponseHome;
 import fr.paris.lutece.plugins.forms.business.Question;
 import fr.paris.lutece.plugins.forms.business.QuestionHome;
-import fr.paris.lutece.plugins.forms.service.FormsPlugin;
 import fr.paris.lutece.plugins.genericattributes.business.Response;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.business.EudonetLink;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.business.EudonetLinkHome;
@@ -25,25 +25,19 @@ import fr.paris.lutece.portal.business.file.File;
 import fr.paris.lutece.portal.business.file.FileHome;
 import fr.paris.lutece.portal.business.physicalfile.PhysicalFile;
 import fr.paris.lutece.portal.business.physicalfile.PhysicalFileHome;
-import fr.paris.lutece.portal.service.plugin.Plugin;
-import fr.paris.lutece.portal.service.plugin.PluginService;
+import fr.paris.lutece.portal.service.util.AppLogService;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 public class BuildJsonBodyService
 {
-    private static BuildJsonBodyService _singleton;
-    private static final String PROPERTY_ENTRY_TYPE_GEOLOCATION = "directory.entry_type.geolocation";
-    private static final String PROPERTY_ENTRY_TYPE_IMAGE = "directory.resource_rss.entry_type_image";
+    private static final String FORMS_ENTRY_TYPE_GEOLOCATION = "forms.entryTypeGeolocation";
+	private static final String FORMS_ENTRY_TYPE_DATE = "forms.entryTypeDate";
+	
+	private static final String EUDONET_CREATION_DATE_VALUE = "creation_date";
+	
+	private static BuildJsonBodyService _singleton;
 
-    // Constants
-    private static final int CONSTANT_ENTRY_DATE_CREATION = -2;
-    private static final int CONSTANT_ENTRY_DATE_MODIFICATION = -3;
-
-    /**
-     * The plugin Forms.
-     */
-    private final Plugin _pluginForms = PluginService.getPlugin( FormsPlugin.PLUGIN_NAME );
 
     /**
      * @return instance BuildJsonBodyService
@@ -72,105 +66,39 @@ public class BuildJsonBodyService
     public String getRecordFieldValue( String codeQuestion, int nIdResponse, int nIdForm )
     {
         String strRecordFieldValue = StringUtils.EMPTY;
-        Plugin pluginForms = PluginService.getPlugin( FormsPlugin.PLUGIN_NAME );
-
-//        if ( codeQuestion == CONSTANT_ENTRY_DATE_CREATION || codeQuestion == CONSTANT_ENTRY_DATE_MODIFICATION )
-//        {
-//            if ( codeQuestion == CONSTANT_ENTRY_DATE_CREATION )
-//            {
-//                return getDateCreation( nIdRecord );
-//            }
-//            else
-//            {
-//                return getDateModification( nIdRecord );
-//            }
-//        }
-//        
-        
         Question question = QuestionHome.findByCode(codeQuestion);
         
         List<FormQuestionResponse> questionResponse = FormQuestionResponseHome.findFormQuestionResponseByResponseQuestion(nIdResponse, question.getId());
         
-        // FIXME Gerer les differents type de reponse et les iterations (regroupement et fichier)
         if ( CollectionUtils.isNotEmpty(questionResponse) ) {
         	List<Response> responses = questionResponse.get( 0 ).getEntryResponse();
         	if ( CollectionUtils.isNotEmpty(responses)) {
         		strRecordFieldValue = responses.get(0).getResponseValue();
+        		
+				if (responses.get(0).getEntry().getEntryType().getBeanName().equalsIgnoreCase(FORMS_ENTRY_TYPE_DATE)) {
+					try {
+						Date date = DateUtils.parseDate(strRecordFieldValue, "dd/MM/yyyy");
+						DateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+						String strDate = sdf.format(date);
+						if (strDate != null)
+							return strDate;
+					} catch (Exception e) {
+						AppLogService.debug(e);
+					}
+				}
+
+				if (responses.get(0).getEntry().getEntryType().getBeanName()
+						.equalsIgnoreCase(FORMS_ENTRY_TYPE_GEOLOCATION)) {
+					// Cas d'un champ de type geolocation. On retourne la valeur du field 'address'
+					Optional<Response> address = responses.stream().filter(response -> response.getField().getCode().equals("address")).findFirst();
+					if (address.isPresent()) {
+						strRecordFieldValue = address.get().getResponseValue();
+					}
+				}
+
         	}
         }
         
-
-//        IEntry entry = EntryHome.findByPrimaryKey( nIdEntry, pluginForms );
-//
-//        if ( ( entry != null ) )
-//        {
-//            RecordFieldFilter recordFieldFilter = new RecordFieldFilter( );
-//            recordFieldFilter.setIdForms( nIdFormResponse );
-//            recordFieldFilter.setIdEntry( entry.getIdEntry( ) );
-//            recordFieldFilter.setIdRecord( nIdRecord );
-//
-//            List<RecordField> listRecordFields = RecordFieldHome.getRecordFieldList( recordFieldFilter, pluginForms );
-//
-//            if ( entry.getEntryType( ).getIdType( ) == AppPropertiesService.getPropertyInt( PROPERTY_ENTRY_TYPE_GEOLOCATION, 16 ) )
-//            {
-//                if ( listRecordFields.size( ) >= 4 )
-//                {
-//                    return listRecordFields.get( 2 ).getValue( ) + ", " + listRecordFields.get( 3 ).getValue( );
-//                }
-//                else
-//                {
-//                    return StringUtils.EMPTY;
-//                }
-//            }
-//
-//            if ( entry.getEntryType( ).getIdType( ) == 8 )
-//            {
-//                RecordField recordFieldIdDemand = listRecordFields.get( 0 );
-//                strRecordFieldValue = recordFieldIdDemand.getValue( );
-//
-//                if ( recordFieldIdDemand.getEntry( ) != null )
-//                {
-//                    return recordFieldIdDemand.getEntry( ).getTitle( );
-//                }
-//            }
-//
-//            if ( entry.getEntryType( ).getIdType( ) == 4 )
-//            {
-//                RecordField recordFieldIdDemand = listRecordFields.get( 0 );
-//                strRecordFieldValue = recordFieldIdDemand.getValue( );
-//
-//                if ( recordFieldIdDemand.getField( ) != null )
-//                {
-//                    strRecordFieldValue = recordFieldIdDemand.getField( ).getTitle( );
-//                }
-//                try
-//                {
-//                    long times = Long.parseLong( strRecordFieldValue );
-//                    Date date = new Date( times );
-//                    DateFormat sdf = new SimpleDateFormat( "yyyy/MM/dd HH:mm:ss" );
-//                    String strDate = sdf.format( date );
-//                    if ( strDate != null )
-//                        return strDate;
-//
-//                }
-//                catch( Exception e )
-//                {
-//                    // ("NumberFormatException: " + nfe.getMessage());
-//                }
-//            }
-//
-//            if ( ( listRecordFields != null ) && !listRecordFields.isEmpty( ) && ( listRecordFields.get( 0 ) != null ) )
-//            {
-//                RecordField recordFieldIdDemand = listRecordFields.get( 0 );
-//                strRecordFieldValue = recordFieldIdDemand.getValue( );
-//
-//                if ( recordFieldIdDemand.getField( ) != null )
-//                {
-//                    strRecordFieldValue = recordFieldIdDemand.getField( ).getTitle( );
-//                }
-//            }
-//        }
-
         return strRecordFieldValue;
     }
 
@@ -184,135 +112,26 @@ public class BuildJsonBodyService
      */
     public File getRecordFileValue( String codeQuestion, int nIdResponse, int nIdForm )
     {
-        String strRecordFieldValue = StringUtils.EMPTY;
-        Plugin pluginForms = PluginService.getPlugin( FormsPlugin.PLUGIN_NAME );
-        
         Question question = QuestionHome.findByCode(codeQuestion);
         
         List<FormQuestionResponse> questionResponse = FormQuestionResponseHome.findFormQuestionResponseByResponseQuestion(nIdResponse, question.getId());
-
         
-        PhysicalFile physicalFile = null;
-        File file = FileHome.findByPrimaryKey( -1 );
-        if ( file != null )
-        {
-            physicalFile = PhysicalFileHome.findByPrimaryKey( file.getPhysicalFile( ).getIdPhysicalFile( ) );
+        if ( CollectionUtils.isNotEmpty(questionResponse) ) {
+        	List<Response> responses = questionResponse.get( 0 ).getEntryResponse();
+        	if ( CollectionUtils.isNotEmpty(responses)) {
+                return FileHome.findByPrimaryKey( responses.get(0).getFile().getIdFile() );
+        	}
         }
-
-
-//        IEntry entry = EntryHome.findByPrimaryKey( nIdEntry, pluginDirectory );
-//
-//        if ( ( entry != null ) )
-//        {
-//            RecordFieldFilter recordFieldFilter = new RecordFieldFilter( );
-//            recordFieldFilter.setIdForms( nIdDirectory );
-//            recordFieldFilter.setIdEntry( entry.getIdEntry( ) );
-//            recordFieldFilter.setIdRecord( nIdRecord );
-//
-//            List<RecordField> listRecordFields = RecordFieldHome.getRecordFieldList( recordFieldFilter, pluginDirectory );
-//
-//            if ( entry.getEntryType( ).getIdType( ) == 8 )
-//            {
-//                RecordField recordFieldIdDemand = listRecordFields.get( 0 );
-//                strRecordFieldValue = recordFieldIdDemand.getValue( );
-//
-//                if ( recordFieldIdDemand.getFile( ) != null )
-//                {
-//                    return recordFieldIdDemand.getFile( );
-//                }
-//            }
-//        }
 
         return null;
     }
-
-    private Timestamp getDateCreation( int nIdRecord, int nIdDirectory )
-    {
-        Plugin pluginForms = PluginService.getPlugin( FormsPlugin.PLUGIN_NAME );
-
-//        RecordFieldFilter recordFieldFilter = new RecordFieldFilter( );
-//        recordFieldFilter.setIdForms( nIdDirectory );
-//        recordFieldFilter.setIdRecord( nIdRecord );
-//
-//        List<RecordField> listRecordFields = RecordFieldHome.getRecordFieldList( recordFieldFilter, pluginDirectory );
-//
-//        if ( ( listRecordFields != null ) && !listRecordFields.isEmpty( ) && ( listRecordFields.get( 0 ) != null ) )
-//        {
-//            return listRecordFields.get( 0 ).getRecord( ).getDateCreation( );
-//        }
-
-        return null;
-    }
-
-    private String getDateCreation( int nIdRecord )
-    {
-        FormResponse record = FormResponseHome.findByPrimaryKey( nIdRecord );
-//        Record record = Form.findByPrimaryKey( nIdRecord, pluginForms );
-        if ( record != null )
-        {
-            long times = record.getCreation( ).getTime( );
-            Date date = new Date( times );
-            DateFormat sdf = new SimpleDateFormat( "yyyy/MM/dd HH:mm:ss" );
-            String strDate = sdf.format( date );
-            if ( strDate != null )
-                return strDate;
-        }
-
-        return "";
-    }
-
-    private String getDateModification( int nIdRecord )
-    {
-    	FormResponse record = FormResponseHome.findByPrimaryKey( nIdRecord );
-
-//        Record record = RecordHome.findByPrimaryKey( nIdRecord, pluginDirectory );
-        if ( record != null )
-        {
-            long times = record.getUpdate( ).getTime( );
-            Date date = new Date( times );
-            DateFormat sdf = new SimpleDateFormat( "yyyy/MM/dd HH:mm:ss" );
-            String strDate = sdf.format( date );
-            if ( strDate != null )
-                return strDate;
-        }
-
-        return "";
-    }
-
-    public String getCreateRecordJsonBody( int nIdTable, List<EudonetRestData> _entries, int nIdRessource, int nIdForm )
+    
+    public String getCreateRecordJsonBodyLink( int nIdTable, List<EudonetRestData> entries, int nIdRessource, int nIdForm, List<Integer> listTableLinked )
     {
         JSONObject jsonObjectFinal = new JSONObject( );
         JSONArray jsonArray = new JSONArray( );
 
-        for ( EudonetRestData entry : _entries )
-        {
-            String strIdTable = entry.getIdTable( ).split( "-" ) [0];
-
-            if ( strIdTable.equals( "" + nIdTable ) )
-            {
-                String strIdAtt = entry.getIdAttribut( ).split( "-" ) [0];
-                JSONObject jsonObject = new JSONObject( );
-                jsonObject.accumulate( "DescId", Integer.parseInt( strIdAtt ) );
-                if ( entry.getDefaultValue( ) != null && !entry.getDefaultValue( ).isEmpty( ) )
-                    jsonObject.accumulate( "Value", entry.getDefaultValue( ) );
-                else
-                    jsonObject.accumulate( "Value", getRecordFieldValue( entry.getOrderQuestion( ), nIdRessource, nIdForm ) );
-
-                jsonArray.add( jsonObject );
-            }
-        }
-
-        jsonObjectFinal.accumulate( "Fields", jsonArray );
-
-        return jsonObjectFinal.toString( );
-    }
-
-    public String getCreateRecordJsonBodyLink( int nIdTable, List<EudonetRestData> _entries, int nIdRessource, int nIdForm, List<Integer> listTableLinked )
-    {
-        JSONObject jsonObjectFinal = new JSONObject( );
-        JSONArray jsonArray = new JSONArray( );
-
-        for ( EudonetRestData entry : _entries )
+        for ( EudonetRestData entry : entries )
         {
             String strIdTable = entry.getIdTable( ).split( "-" ) [0];
 
@@ -323,7 +142,7 @@ public class BuildJsonBodyService
 
                 jsonObject.accumulate( "DescId", Integer.parseInt( strIdAtt ) );
                 if ( entry.getDefaultValue( ) != null && !entry.getDefaultValue( ).isEmpty( ) )
-                    jsonObject.accumulate( "Value", entry.getDefaultValue( ) );
+                    jsonObject.accumulate( "Value", getDefaultValue( entry.getDefaultValue(), nIdRessource ) );
                 else
                     jsonObject.accumulate( "Value", getRecordFieldValue( entry.getOrderQuestion( ), nIdRessource, nIdForm ) );
 
@@ -349,21 +168,31 @@ public class BuildJsonBodyService
 
         return jsonObjectFinal.toString( );
     }
+    
+    private String getDefaultValue(String defaultValue, int nIdFormResponse) {
+    	if (EUDONET_CREATION_DATE_VALUE.equals(defaultValue)) {
+    		FormResponse response = FormResponseHome.findByPrimaryKey(nIdFormResponse);
+            DateFormat sdf = new SimpleDateFormat( "yyyy/MM/dd HH:mm:ss" );
+            String strDate = sdf.format( response.getCreation() );
+            if ( strDate != null )
+                return strDate;
+    	}
+    		
+    	return defaultValue;
+    }
 
-    public JSONArray getCreateAnnexeJsonBody( int nIdFile, int nIdTable, List<EudonetRestData> _entries, int nIdRessource, int nIdDirectory )
+    public JSONArray getCreateAnnexeJsonBody( int nIdFile, int nIdTable, List<EudonetRestData> entries, int nIdRessource, int nIdDirectory )
     {
         JSONArray jsonArray = new JSONArray( );
 
-        for ( EudonetRestData entry : _entries )
+        for ( EudonetRestData entry : entries )
         {
             String strIdTableLink = entry.getIdTableLink( ).split( "-" ) [0];
-            String strIdTable = entry.getIdTable( ).split( "-" ) [0];
-            if ( !strIdTableLink.isEmpty( ) && strIdTable.equals( "" + nIdTable ) )
+            if ( !strIdTableLink.isEmpty( ) && strIdTableLink.equals( "" + nIdTable ) )
             {
                 File file = getRecordFileValue( entry.getOrderQuestion( ), nIdRessource, nIdDirectory );
                 if ( file != null )
                 {
-                	FileHome.findByPrimaryKey( nIdRessource );
                     PhysicalFile physicalFile = PhysicalFileHome.findByPrimaryKey( file.getPhysicalFile( ).getIdPhysicalFile( ) );
                     String strFileName = file.getTitle( );
                     String strContent = "";

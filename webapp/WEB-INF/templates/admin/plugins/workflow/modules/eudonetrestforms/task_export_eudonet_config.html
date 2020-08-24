@@ -154,7 +154,7 @@
             </td>
             <td>
               <#list list_entries as ent>
-              	<#if ent.code?string == entrie.orderQuestion?string  >
+              	<#if entrie.orderQuestion?has_content && ent.code?string == entrie.orderQuestion?string  >
 					${ent.name!}
 				</#if>
 			</#list>
