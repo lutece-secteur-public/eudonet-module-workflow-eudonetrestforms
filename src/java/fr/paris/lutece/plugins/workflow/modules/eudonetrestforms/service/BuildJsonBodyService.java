@@ -66,38 +66,43 @@ public class BuildJsonBodyService
     public String getRecordFieldValue( String codeQuestion, int nIdResponse, int nIdForm )
     {
         String strRecordFieldValue = StringUtils.EMPTY;
-        Question question = QuestionHome.findByCode(codeQuestion);
-        
-        List<FormQuestionResponse> questionResponse = FormQuestionResponseHome.findFormQuestionResponseByResponseQuestion(nIdResponse, question.getId());
-        
-        if ( CollectionUtils.isNotEmpty(questionResponse) ) {
-        	List<Response> responses = questionResponse.get( 0 ).getEntryResponse();
-        	if ( CollectionUtils.isNotEmpty(responses)) {
-        		strRecordFieldValue = responses.get(0).getResponseValue();
-        		
-				if (responses.get(0).getEntry().getEntryType().getBeanName().equalsIgnoreCase(FORMS_ENTRY_TYPE_DATE)) {
-					try {
-						Date date = DateUtils.parseDate(strRecordFieldValue, "dd/MM/yyyy");
-						DateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-						String strDate = sdf.format(date);
-						if (strDate != null)
-							return strDate;
-					} catch (Exception e) {
-						AppLogService.debug(e);
-					}
-				}
+        try {
 
-				if (responses.get(0).getEntry().getEntryType().getBeanName()
-						.equalsIgnoreCase(FORMS_ENTRY_TYPE_GEOLOCATION)) {
-					// Cas d'un champ de type geolocation. On retourne la valeur du field 'address'
-					Optional<Response> address = responses.stream().filter(response -> response.getField().getCode().equals("address")).findFirst();
-					if (address.isPresent()) {
-						strRecordFieldValue = address.get().getResponseValue();
-					}
-				}
+            Question question = QuestionHome.findByCode(codeQuestion);
+            
+            List<FormQuestionResponse> questionResponse = FormQuestionResponseHome.findFormQuestionResponseByResponseQuestion(nIdResponse, question.getId());
+            
+            if ( CollectionUtils.isNotEmpty(questionResponse) ) {
+            	List<Response> responses = questionResponse.get( 0 ).getEntryResponse();
+            	if ( CollectionUtils.isNotEmpty(responses)) {
+            		strRecordFieldValue = responses.get(0).getResponseValue();
+            		
+    				if (responses.get(0).getEntry().getEntryType().getBeanName().equalsIgnoreCase(FORMS_ENTRY_TYPE_DATE)) {
+    					try {
+    						Date date = DateUtils.parseDate(strRecordFieldValue, "dd/MM/yyyy");
+    						DateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    						String strDate = sdf.format(date);
+    						if (strDate != null)
+    							return strDate;
+    					} catch (Exception e) {
+    						AppLogService.debug(e);
+    					}
+    				}
 
-        	}
-        }
+    				if (responses.get(0).getEntry().getEntryType().getBeanName()
+    						.equalsIgnoreCase(FORMS_ENTRY_TYPE_GEOLOCATION)) {
+    					// Cas d'un champ de type geolocation. On retourne la valeur du field 'address'
+    					Optional<Response> address = responses.stream().filter(response -> response.getField().getCode().equals("address")).findFirst();
+    					if (address.isPresent()) {
+    						strRecordFieldValue = address.get().getResponseValue();
+    					}
+    				}
+
+            	}
+            }
+        } catch (Exception e) {
+			AppLogService.debug(e);
+		}
         
         return strRecordFieldValue;
     }
@@ -126,7 +131,7 @@ public class BuildJsonBodyService
         return null;
     }
     
-    public String getCreateRecordJsonBodyLink( int nIdTable, List<EudonetRestData> entries, int nIdRessource, int nIdForm, List<Integer> listTableLinked )
+    public String getCreateRecordJsonBodyLink( int nIdTable, List<EudonetRestData> entries, int nIdRessource, int nIdForm, List<Integer> listTableLinked, String prefixCode )
     {
         JSONObject jsonObjectFinal = new JSONObject( );
         JSONArray jsonArray = new JSONArray( );
@@ -144,7 +149,7 @@ public class BuildJsonBodyService
                 if ( entry.getDefaultValue( ) != null && !entry.getDefaultValue( ).isEmpty( ) )
                     jsonObject.accumulate( "Value", getDefaultValue( entry.getDefaultValue(), nIdRessource ) );
                 else
-                    jsonObject.accumulate( "Value", getRecordFieldValue( entry.getOrderQuestion( ), nIdRessource, nIdForm ) );
+                    jsonObject.accumulate( "Value", getRecordFieldValue( entry.getOrderQuestion( ).replaceFirst("I1_", prefixCode), nIdRessource, nIdForm ) );
 
                 jsonArray.add( jsonObject );
             }

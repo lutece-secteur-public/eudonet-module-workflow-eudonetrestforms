@@ -3,6 +3,8 @@ package fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.threadService;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.sun.jersey.api.client.ClientResponse;
 
 import fr.paris.lutece.plugins.forms.business.Form;
@@ -27,6 +29,9 @@ public class AcdpThread extends Thread
 {
     private static final String THREAD_NAME = "eudonetRest-export-Acdp-thread";
     private static final String ACTION = "ACDP ACTION";
+    
+    private static final Integer INSTALLATIONS_TABLE = 1500; // "1500-Installations"
+    private static final String NEXT_INSTALLATION_CODE = "autreInstallation";
 
     private EudonetClient _client;
     private EudonetRestWsService _eudonetRestWsService;
@@ -183,59 +188,71 @@ public class AcdpThread extends Thread
             for ( Integer i : idTableList )
             {
                 List<Integer> idTableListLinked = getTableListLinked( strToken, i );
-
-                try
-                {
-                    String strJsonBody = BuildJsonBodyService.getService( ).getCreateRecordJsonBodyLink( i, _listEuData, _nIdResource, _nIdForm,
-                            idTableListLinked );
-                    ClientResponse response = _client.createRecord( strToken, "" + i, strJsonBody );
-                    if ( response.getStatus( ) == 200 )
+                
+                int iteration = 1;
+                boolean hasNextIteration = false;
+                
+                do {
+                	String prefix = StringUtils.EMPTY;
+                	if ( INSTALLATIONS_TABLE.equals(i) ) {
+                		prefix = "I" + iteration + "_";
+                    	String nextInstallationValue = BuildJsonBodyService.getService( ).getRecordFieldValue(prefix + NEXT_INSTALLATION_CODE, _nIdResource, _nIdForm);
+                    	hasNextIteration = "YES".equals(nextInstallationValue) ? true : false;
+                	}
+                    try
                     {
-                        String strResponse = response.getEntity( String.class );
-                        JSONObject jsonObject = new JSONObject( );
-                        jsonObject.accumulate( "object", strResponse );
-
-                        String strStatus = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "Success" );
-
-                        if ( strStatus.equals( "true" ) )
+                        String strJsonBody = BuildJsonBodyService.getService( ).getCreateRecordJsonBodyLink( i, _listEuData, _nIdResource, _nIdForm,
+                                idTableListLinked, prefix );
+                        ClientResponse response = _client.createRecord( strToken, "" + i, strJsonBody );
+                        if ( response.getStatus( ) == 200 )
                         {
-                            String strFileId = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultData" ).getString( "FileId" );
-                            if ( strFileId != null && !strFileId.isEmpty( ) )
+                            String strResponse = response.getEntity( String.class );
+                            JSONObject jsonObject = new JSONObject( );
+                            jsonObject.accumulate( "object", strResponse );
+
+                            String strStatus = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "Success" );
+
+                            if ( strStatus.equals( "true" ) )
                             {
-                                Integer nFileId = Integer.parseInt( strFileId );
+                                String strFileId = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultData" ).getString( "FileId" );
+                                if ( strFileId != null && !strFileId.isEmpty( ) )
+                                {
+                                    Integer nFileId = Integer.parseInt( strFileId );
 
-                                if ( isAnnexed( i ) )
-                                    createAnnexes( strToken, nFileId, i, bError );
+                                    if ( isAnnexed( i ) )
+                                        createAnnexes( strToken, nFileId, i, bError );
 
-                                EudonetLink eudonetLink = new EudonetLink( );
-                                eudonetLink.setIdRessource( _nIdResource );
-                                eudonetLink.setIdField( "" + nFileId );
-                                eudonetLink.setIdTable( "" + i );
-                                eudonetLink.setIdTableLink( "" );
+                                    EudonetLink eudonetLink = new EudonetLink( );
+                                    eudonetLink.setIdRessource( _nIdResource );
+                                    eudonetLink.setIdField( "" + nFileId );
+                                    eudonetLink.setIdTable( "" + i );
+                                    eudonetLink.setIdTableLink( "" );
 
-                                EudonetLinkHome.create( eudonetLink );
+                                    EudonetLinkHome.create( eudonetLink );
+                                }
+
+                                AppLogService.info( "Succes Creation - FileId : " + strFileId );
                             }
-
-                            AppLogService.info( "Succes Creation - FileId : " + strFileId );
-                        }
-                        else
-                        {
-                            String strErrorMessage = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "ErrorMessage" );
-                            AppLogService.error( "Error Eudonet : " + strErrorMessage );
-                            bError = true;
+                            else
+                            {
+                                String strErrorMessage = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "ErrorMessage" );
+                                AppLogService.error( "Error Eudonet : " + strErrorMessage );
+                                bError = true;
+                            }
                         }
                     }
-                }
-                catch( Exception ex )
-                {
-                    AppLogService.error( "Erreur to create table : " + i, ex );
-                    bError = true;
-                }
-            }
+                    catch( Exception ex )
+                    {
+                        AppLogService.error( "Erreur to create table : " + i, ex );
+                        bError = true;
+                    }
 
+                	iteration++;
+                } while (hasNextIteration);
+            }
         }
     }
-
+    
     public void createAnnexes( String strToken, int nIdFile, int nIdTable, boolean bError )
     {
         if ( strToken != null )
