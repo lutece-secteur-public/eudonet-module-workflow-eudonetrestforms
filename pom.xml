@@ -58,9 +58,9 @@
     </properties>
     
     <scm>
-        <connection>scm:git:https://github.com/lutece-platform/lutece-wf-module-workflow-eudonetrestdirectory</connection>
-        <developerConnection>scm:git:https://github.com/lutece-platform/lutece-wf-module-workflow-eudonetrestdirectory</developerConnection>
-        <url>https://github.com/lutece-platform/lutece-wf-module-workflow-eudonetrestdirectory</url>
+        <connection>scm:git:https://dev.lutece.paris.fr/gitlab/tmma/a13/module-workflow-eudonetrestforms</connection>
+        <developerConnection>scm:git:https://dev.lutece.paris.fr/gitlab/tmma/a13/module-workflow-eudonetrestforms</developerConnection>
+        <url>https://dev.lutece.paris.fr/gitlab/tmma/a13/module-workflow-eudonetrestforms</url>
       	<tag>HEAD</tag>
   	</scm>
 	
