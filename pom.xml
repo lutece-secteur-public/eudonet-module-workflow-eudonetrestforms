@@ -56,9 +56,9 @@
     </properties>
     
     <scm>
-        <connection>scm:git:https://dev.lutece.paris.fr/gitlab/tmma/a13/module-workflow-eudonetrestforms</connection>
-        <developerConnection>scm:git:https://dev.lutece.paris.fr/gitlab/tmma/a13/module-workflow-eudonetrestforms</developerConnection>
-        <url>https://dev.lutece.paris.fr/gitlab/tmma/a13/module-workflow-eudonetrestforms</url>
+        <connection>scm:git:https://dev.lutece.paris.fr/gitlab/tmma/a13/module-workflow-eudonetrestforms.git</connection>
+        <developerConnection>scm:git:https://dev.lutece.paris.fr/gitlab/tmma/a13/module-workflow-eudonetrestforms.git</developerConnection>
+        <url>https://dev.lutece.paris.fr/gitlab/tmma/a13/module-workflow-eudonetrestforms.git</url>
       	<tag>HEAD</tag>
   	</scm>
 	
