@@ -54,9 +54,6 @@ import fr.paris.lutece.plugins.forms.business.Form;
 import fr.paris.lutece.plugins.forms.business.FormHome;
 import fr.paris.lutece.plugins.forms.business.Question;
 import fr.paris.lutece.plugins.forms.business.QuestionHome;
-import fr.paris.lutece.plugins.forms.business.Step;
-import fr.paris.lutece.plugins.forms.business.StepHome;
-import fr.paris.lutece.plugins.forms.service.FormsPlugin;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.business.EudonetRestData;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.business.ReferenceItemSorted;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.business.TaskEudonetRestConfig;
@@ -67,8 +64,6 @@ import fr.paris.lutece.plugins.workflow.utils.WorkflowUtils;
 import fr.paris.lutece.plugins.workflow.web.task.NoFormTaskComponent;
 import fr.paris.lutece.plugins.workflowcore.service.config.ITaskConfigService;
 import fr.paris.lutece.plugins.workflowcore.service.task.ITask;
-import fr.paris.lutece.portal.service.plugin.Plugin;
-import fr.paris.lutece.portal.service.plugin.PluginService;
 import fr.paris.lutece.portal.service.template.AppTemplateService;
 import fr.paris.lutece.portal.service.util.AppLogService;
 import fr.paris.lutece.util.ReferenceItem;
@@ -115,10 +110,6 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
     public static final String PARAMETER_EUDONET_ATTRIBUT = "eudonet_attribut";
     public static final String PARAMETER_EUDONET_TABLE = "eudonet_table";
     public static final String PARAMETER_ID_ENTRY = "id_entry";
-
-    // Constants
-    private static final String CONSTANT_ENTRY_DATE_CREATION = "-2";
-    private static final String CONSTANT_ENTRY_DATE_MODIFICATION = "-3";
 
     public static final String CONSTANT_I18_LABEL_ENTRY_DATE_CREATION = "module.workflow.eudonetrestforms.task_eudonet_config.label.creation_date";
     public static final String CONSTANT_I18_LABEL_ENTRY_DATE_MODIFICATION = "module.workflow.eudonetrestforms.task_eudonet_config.label.modification_date";
@@ -434,11 +425,7 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
     {
         if ( nIdForm != -1 )
         {
-            Plugin pluginDirectory = PluginService.getPlugin( FormsPlugin.PLUGIN_NAME );
-            
             Form form = FormHome.findByPrimaryKey( nIdForm );
-            
-//            List<Step> listStepsOfForm = StepHome.getStepsListByForm( form.getId( ) );
             
             List<ReferenceItemSorted> referenceList = new ArrayList<ReferenceItemSorted>( );
 			List<Question> listQuestionByIdForm = QuestionHome.getListQuestionByIdForm( form.getId( ) );
@@ -451,60 +438,6 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
 				
 			});
 			
-//            List<IEntry> listEntries = DirectoryUtils.getFormEntries( nIdDirectory, pluginDirectory, AdminUserService.getAdminUser( request ) );
-//            List<ReferenceItemSorted> referenceList = new ArrayList<ReferenceItemSorted>( );
-//
-//            ReferenceItemSorted referenceItemSorted = new ReferenceItemSorted( );
-//            referenceItemSorted.setCode( "" );
-//            referenceItemSorted.setName( "" );
-//            referenceList.add( referenceItemSorted );
-//
-//            ReferenceItemSorted referenceItemSortedCD = new ReferenceItemSorted( );
-//            referenceItemSortedCD.setCode( CONSTANT_ENTRY_DATE_CREATION );
-//            referenceItemSortedCD.setName( I18nService.getLocalizedString( CONSTANT_I18_LABEL_ENTRY_DATE_CREATION, request.getLocale( ) ) );
-//            referenceList.add( referenceItemSortedCD );
-//
-//            ReferenceItemSorted referenceItemSortedMD = new ReferenceItemSorted( );
-//            referenceItemSortedMD.setCode( CONSTANT_ENTRY_DATE_MODIFICATION );
-//            referenceItemSortedMD.setName( I18nService.getLocalizedString( CONSTANT_I18_LABEL_ENTRY_DATE_MODIFICATION, request.getLocale( ) ) );
-//            referenceList.add( referenceItemSortedMD );
-//
-//            for ( IEntry entry : listEntries )
-//            {
-//                if ( entry.getEntryType( ).getComment( ) )
-//                {
-//                    continue;
-//                }
-//
-//                if ( entry.getEntryType( ).getGroup( ) )
-//                {
-//                    if ( entry.getChildren( ) != null )
-//                    {
-//                        for ( IEntry child : entry.getChildren( ) )
-//                        {
-//                            if ( child.getEntryType( ).getComment( ) )
-//                            {
-//                                continue;
-//                            }
-//
-//                            ReferenceItemSorted referenceItem = new ReferenceItemSorted( );
-//                            referenceItem.setCode( String.valueOf( child.getIdEntry( ) ) );
-//                            referenceItem.setName( child.getTitle( ) );
-//                            referenceList.add( referenceItem );
-//                        }
-//                    }
-//                }
-//                else
-//                {
-//                    ReferenceItemSorted referenceItem = new ReferenceItemSorted( );
-//                    referenceItem.setCode( String.valueOf( entry.getIdEntry( ) ) );
-//                    referenceItem.setName( entry.getTitle( ) );
-//                    referenceList.add( referenceItem );
-//                }
-//            }
-
-            Collections.sort( referenceList );
-
             return referenceList;
         }
         else

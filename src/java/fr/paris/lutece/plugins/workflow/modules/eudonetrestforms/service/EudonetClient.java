@@ -1,6 +1,15 @@
 package fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.service;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.URL;
+import java.util.Arrays;
+
 import javax.ws.rs.core.MediaType;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -9,20 +18,81 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.api.json.JSONConfiguration;
+import com.sun.jersey.client.urlconnection.HttpURLConnectionFactory;
+import com.sun.jersey.client.urlconnection.URLConnectionClientHandler;
+
+import fr.paris.lutece.portal.service.util.AppPropertiesService;
 
 public class EudonetClient
 {
     private static Client _client;
     private static WebResource _webResource;
     private static EudonetClient _singleton;
+    
+    /** The Constant PROPERTY_PROXY_HOST. */
+    private static final String PROPERTY_PROXY_HOST = "httpAccess.proxyHost";
+
+    /** The Constant PROPERTY_PROXY_PORT. */
+    private static final String PROPERTY_PROXY_PORT = "httpAccess.proxyPort";
+    
+    /** The Constant PROPERTY_NO_PROXY_FOR. */
+    private static final String PROPERTY_NO_PROXY_FOR = "httpAccess.noProxyFor";
+
+
+    /** The Constant SEPARATOR. */
+    private static final String SEPARATOR = ",";
 
     public EudonetClient( String baseUrl )
     {
-        ClientConfig clientConfig = new DefaultClientConfig( );
+    	ClientConfig clientConfig = new DefaultClientConfig( );
         clientConfig.getFeatures( ).put( JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE );
-        _client = Client.create( clientConfig );
+        _client = createClient(clientConfig, baseUrl);
         // _client.addFilter( new HTTPBasicAuthFilter( "", "" ) );
         _webResource = _client.resource( baseUrl );
+    }
+    
+    private Client createClient(ClientConfig clientConfig, String baseUrl) {
+    	return new Client(new URLConnectionClientHandler(
+                new HttpURLConnectionFactory() {
+                    Proxy p = null;
+                    @Override
+                    public HttpURLConnection getHttpURLConnection(URL url)
+                            throws IOException {
+                        if (p == null) {
+                        	
+                            String _strProxyHost = AppPropertiesService.getProperty( PROPERTY_PROXY_HOST );
+                            String _strProxyPort = AppPropertiesService.getProperty( PROPERTY_PROXY_PORT );
+                            String _strNoProxyFor = AppPropertiesService.getProperty( PROPERTY_NO_PROXY_FOR );
+
+                            boolean bNoProxy = false;
+                            
+                            // If proxy host and port found, set the correponding elements
+                            if ( StringUtils.isNotBlank( _strProxyHost ) && StringUtils.isNotBlank( _strProxyPort ) && StringUtils.isNumeric( _strProxyPort ) )
+                            {
+                                bNoProxy = ( StringUtils.isNotBlank( _strNoProxyFor ) && matchesList( _strNoProxyFor.split( SEPARATOR ), url.getHost() ) );
+
+                                if ( !bNoProxy )
+                                {
+                                    p = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(_strProxyHost, Integer.valueOf(_strProxyPort)));
+                                } else {
+                                	p = Proxy.NO_PROXY;
+                                }
+                            }
+                            
+                        }
+                        return (HttpURLConnection) url.openConnection(p);
+                    }
+                }), clientConfig);
+    }
+    
+    private boolean matchesList( String [ ] listPatterns, String strText )
+    {
+        if ( listPatterns == null )
+        {
+            return false;
+        }
+
+        return Arrays.asList(listPatterns).contains(strText);
     }
 
     public static EudonetClient getService( String baseUrl )
@@ -39,10 +109,10 @@ public class EudonetClient
 
     public EudonetClient( String baseUrl, String userName, String password )
     {
-        ClientConfig clientConfig = new DefaultClientConfig( );
+    	ClientConfig clientConfig = new DefaultClientConfig( );
         clientConfig.getFeatures( ).put( JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE );
-        _client = Client.create( clientConfig );
-        _client.addFilter( new HTTPBasicAuthFilter( userName, password ) );
+        _client = createClient(clientConfig, baseUrl);
+    	_client.addFilter( new HTTPBasicAuthFilter( userName, password ) );
         _webResource = _client.resource( baseUrl );
     }
 
