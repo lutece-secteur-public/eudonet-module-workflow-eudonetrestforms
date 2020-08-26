@@ -2,7 +2,7 @@
     <!-- Plugin Informations -->
     <name>workflow-eudonetrestforms</name>
     <class>fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.service.EudonetRestFormsPlugin</class>
-    <version>0.0.1</version>
+    <version>0.0.2-SNAPSHOT</version>
     <documentation/>
     <installation/>
     <changes/>
