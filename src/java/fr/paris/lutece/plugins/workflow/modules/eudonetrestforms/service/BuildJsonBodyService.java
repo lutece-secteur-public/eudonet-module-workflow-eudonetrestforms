@@ -21,6 +21,7 @@ import fr.paris.lutece.plugins.genericattributes.business.Response;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.business.EudonetLink;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.business.EudonetLinkHome;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.business.EudonetRestData;
+import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.utils.EudonetConversion;
 import fr.paris.lutece.portal.business.file.File;
 import fr.paris.lutece.portal.business.file.FileHome;
 import fr.paris.lutece.portal.business.physicalfile.PhysicalFile;
@@ -63,7 +64,7 @@ public class BuildJsonBodyService
      * @param nIdForm
      * @return record field value
      */
-    public String getRecordFieldValue( String codeQuestion, int nIdResponse, int nIdForm )
+    public String getRecordFieldValue( String codeQuestion, int nIdResponse, int nIdForm, EudonetRestData entry )
     {
         String strRecordFieldValue = StringUtils.EMPTY;
         try {
@@ -89,12 +90,23 @@ public class BuildJsonBodyService
     					}
     				}
 
-    				if (responses.get(0).getEntry().getEntryType().getBeanName()
-    						.equalsIgnoreCase(FORMS_ENTRY_TYPE_GEOLOCATION)) {
-    					// Cas d'un champ de type geolocation. On retourne la valeur du field 'address'
-    					Optional<Response> address = responses.stream().filter(response -> response.getField().getCode().equals("address")).findFirst();
-    					if (address.isPresent()) {
-    						strRecordFieldValue = address.get().getResponseValue();
+    				if (responses.get(0).getEntry().getEntryType().getBeanName().equalsIgnoreCase(FORMS_ENTRY_TYPE_GEOLOCATION)) {
+    					if (entry != null && entry.getIdAttribut().contains("Géoloc")) {
+        					// Cas d'un champ de type geolocation. On retourne la valeur du field 'X, Y'
+        					Optional<Response> addressX = responses.stream().filter(response -> response.getField().getCode().equals("X")).findFirst();
+        					Optional<Response> addressY = responses.stream().filter(response -> response.getField().getCode().equals("Y")).findFirst();
+        					if (addressX.isPresent() && addressY.isPresent()) {
+        						Double coordX = Double.valueOf(addressX.get().getResponseValue());
+        						Double coordY = Double.valueOf(addressY.get().getResponseValue());
+        						
+        						strRecordFieldValue = EudonetConversion.lambertToGeographic(coordX, coordY);
+        					}
+    					} else {
+        					// Cas d'un champ de type geolocation. On retourne la valeur du field 'address'
+        					Optional<Response> address = responses.stream().filter(response -> response.getField().getCode().equals("address")).findFirst();
+        					if (address.isPresent()) {
+        						strRecordFieldValue = address.get().getResponseValue();
+        					}
     					}
     				}
 
@@ -149,7 +161,7 @@ public class BuildJsonBodyService
                 if ( entry.getDefaultValue( ) != null && !entry.getDefaultValue( ).isEmpty( ) )
                     jsonObject.accumulate( "Value", getDefaultValue( entry.getDefaultValue(), nIdRessource ) );
                 else
-                    jsonObject.accumulate( "Value", getRecordFieldValue( entry.getOrderQuestion( ).replaceFirst("I1_", prefixCode), nIdRessource, nIdForm ) );
+                    jsonObject.accumulate( "Value", getRecordFieldValue( entry.getOrderQuestion( ).replaceFirst("I1_", prefixCode), nIdRessource, nIdForm, entry ) );
 
                 jsonArray.add( jsonObject );
             }

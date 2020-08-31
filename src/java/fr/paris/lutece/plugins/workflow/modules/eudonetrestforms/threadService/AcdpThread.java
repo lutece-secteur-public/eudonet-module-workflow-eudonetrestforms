@@ -196,7 +196,7 @@ public class AcdpThread extends Thread
                 	String prefix = StringUtils.EMPTY;
                 	if ( INSTALLATIONS_TABLE.equals(i) ) {
                 		prefix = "I" + iteration + "_";
-                    	String nextInstallationValue = BuildJsonBodyService.getService( ).getRecordFieldValue(prefix + NEXT_INSTALLATION_CODE, _nIdResource, _nIdForm);
+                    	String nextInstallationValue = BuildJsonBodyService.getService( ).getRecordFieldValue(prefix + NEXT_INSTALLATION_CODE, _nIdResource, _nIdForm, null);
                     	hasNextIteration = "YES".equals(nextInstallationValue) ? true : false;
                 	}
                     try
