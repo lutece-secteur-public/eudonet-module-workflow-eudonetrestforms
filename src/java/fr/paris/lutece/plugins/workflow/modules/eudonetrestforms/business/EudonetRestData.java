@@ -51,6 +51,8 @@ public class EudonetRestData
 
     private String _strDefaultValue;
 
+    private String _strPrefix;
+
     /**
      * @return Id
      */
@@ -163,4 +165,24 @@ public class EudonetRestData
     {
         this._strDefaultValue = _strDefaultValue;
     }
+
+    /**
+     *
+     * @return _strPrefix
+     */
+    public String getPrefix( )
+    {
+        return _strPrefix;
+    }
+
+    /**
+     *
+     * @param _strPrefix
+     */
+    public void setPrefix( String _strPrefix )
+    {
+        this._strPrefix = _strPrefix;
+    }
+
+
 }

@@ -33,11 +33,11 @@ import net.sf.json.JSONObject;
 public class BuildJsonBodyService
 {
     private static final String FORMS_ENTRY_TYPE_GEOLOCATION = "forms.entryTypeGeolocation";
-	private static final String FORMS_ENTRY_TYPE_DATE = "forms.entryTypeDate";
-	
-	private static final String EUDONET_CREATION_DATE_VALUE = "creation_date";
-	
-	private static BuildJsonBodyService _singleton;
+    private static final String FORMS_ENTRY_TYPE_DATE = "forms.entryTypeDate";
+
+    private static final String EUDONET_CREATION_DATE_VALUE = "creation_date";
+
+    private static BuildJsonBodyService _singleton;
 
 
     /**
@@ -58,7 +58,7 @@ public class BuildJsonBodyService
 
     /**
      * get record field value
-     * 
+     *
      * @param codeQuestion
      * @param nIdResponse
      * @param nIdForm
@@ -70,58 +70,60 @@ public class BuildJsonBodyService
         try {
 
             Question question = QuestionHome.findByCode(codeQuestion);
-            
+
             List<FormQuestionResponse> questionResponse = FormQuestionResponseHome.findFormQuestionResponseByResponseQuestion(nIdResponse, question.getId());
-            
+
             if ( CollectionUtils.isNotEmpty(questionResponse) ) {
-            	List<Response> responses = questionResponse.get( 0 ).getEntryResponse();
-            	if ( CollectionUtils.isNotEmpty(responses)) {
-            		strRecordFieldValue = responses.get(0).getResponseValue();
-            		
-    				if (responses.get(0).getEntry().getEntryType().getBeanName().equalsIgnoreCase(FORMS_ENTRY_TYPE_DATE)) {
-    					try {
-    						Date date = DateUtils.parseDate(strRecordFieldValue, "dd/MM/yyyy");
-    						DateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-    						String strDate = sdf.format(date);
-    						if (strDate != null)
-    							return strDate;
-    					} catch (Exception e) {
-    						AppLogService.debug(e);
-    					}
-    				}
+                List<Response> responses = questionResponse.get( 0 ).getEntryResponse();
+                if ( CollectionUtils.isNotEmpty(responses)) {
+                    strRecordFieldValue = responses.get(0).getResponseValue();
 
-    				if (responses.get(0).getEntry().getEntryType().getBeanName().equalsIgnoreCase(FORMS_ENTRY_TYPE_GEOLOCATION)) {
-    					if (entry != null && entry.getIdAttribut().contains("Géoloc")) {
-        					// Cas d'un champ de type geolocation. On retourne la valeur du field 'X, Y'
-        					Optional<Response> addressX = responses.stream().filter(response -> response.getField().getCode().equals("X")).findFirst();
-        					Optional<Response> addressY = responses.stream().filter(response -> response.getField().getCode().equals("Y")).findFirst();
-        					if (addressX.isPresent() && addressY.isPresent()) {
-        						Double coordX = Double.valueOf(addressX.get().getResponseValue());
-        						Double coordY = Double.valueOf(addressY.get().getResponseValue());
-        						
-        						strRecordFieldValue = EudonetConversion.lambertToGeographic(coordX, coordY);
-        					}
-    					} else {
-        					// Cas d'un champ de type geolocation. On retourne la valeur du field 'address'
-        					Optional<Response> address = responses.stream().filter(response -> response.getField().getCode().equals("address")).findFirst();
-        					if (address.isPresent()) {
-        						strRecordFieldValue = address.get().getResponseValue();
-        					}
-    					}
-    				}
+                    if (responses.get(0).getEntry().getEntryType().getBeanName().equalsIgnoreCase(FORMS_ENTRY_TYPE_DATE)) {
+                        try {
+                            Date date = DateUtils.parseDate(strRecordFieldValue, "dd/MM/yyyy");
+                            DateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                            String strDate = sdf.format(date);
+                            if (strDate != null)
+                            {
+                                return strDate;
+                            }
+                        } catch (Exception e) {
+                            AppLogService.debug(e);
+                        }
+                    }
 
-            	}
+                    if (responses.get(0).getEntry().getEntryType().getBeanName().equalsIgnoreCase(FORMS_ENTRY_TYPE_GEOLOCATION)) {
+                        if (( entry != null ) && entry.getIdAttribut().contains("Géoloc")) {
+                            // Cas d'un champ de type geolocation. On retourne la valeur du field 'X, Y'
+                            Optional<Response> addressX = responses.stream().filter(response -> response.getField().getCode().equals("X")).findFirst();
+                            Optional<Response> addressY = responses.stream().filter(response -> response.getField().getCode().equals("Y")).findFirst();
+                            if (addressX.isPresent() && addressY.isPresent()) {
+                                Double coordX = Double.valueOf(addressX.get().getResponseValue());
+                                Double coordY = Double.valueOf(addressY.get().getResponseValue());
+
+                                strRecordFieldValue = EudonetConversion.lambertToGeographic(coordX, coordY);
+                            }
+                        } else {
+                            // Cas d'un champ de type geolocation. On retourne la valeur du field 'address'
+                            Optional<Response> address = responses.stream().filter(response -> response.getField().getCode().equals("address")).findFirst();
+                            if (address.isPresent()) {
+                                strRecordFieldValue = address.get().getResponseValue();
+                            }
+                        }
+                    }
+
+                }
             }
         } catch (Exception e) {
-			AppLogService.debug(e);
-		}
-        
+            AppLogService.debug(e);
+        }
+
         return strRecordFieldValue;
     }
 
     /**
      * get record field value
-     * 
+     *
      * @param codeQuestion
      * @param nIdResponse
      * @param nIdForm
@@ -130,19 +132,19 @@ public class BuildJsonBodyService
     public File getRecordFileValue( String codeQuestion, int nIdResponse, int nIdForm )
     {
         Question question = QuestionHome.findByCode(codeQuestion);
-        
+
         List<FormQuestionResponse> questionResponse = FormQuestionResponseHome.findFormQuestionResponseByResponseQuestion(nIdResponse, question.getId());
-        
+
         if ( CollectionUtils.isNotEmpty(questionResponse) ) {
-        	List<Response> responses = questionResponse.get( 0 ).getEntryResponse();
-        	if ( CollectionUtils.isNotEmpty(responses)) {
+            List<Response> responses = questionResponse.get( 0 ).getEntryResponse();
+            if ( CollectionUtils.isNotEmpty(responses)) {
                 return FileHome.findByPrimaryKey( responses.get(0).getFile().getIdFile() );
-        	}
+            }
         }
 
         return null;
     }
-    
+
     public String getCreateRecordJsonBodyLink( int nIdTable, List<EudonetRestData> entries, int nIdRessource, int nIdForm, List<Integer> listTableLinked, String prefixCode )
     {
         JSONObject jsonObjectFinal = new JSONObject( );
@@ -158,11 +160,18 @@ public class BuildJsonBodyService
                 JSONObject jsonObject = new JSONObject( );
 
                 jsonObject.accumulate( "DescId", Integer.parseInt( strIdAtt ) );
-                if ( entry.getDefaultValue( ) != null && !entry.getDefaultValue( ).isEmpty( ) )
-                    jsonObject.accumulate( "Value", getDefaultValue( entry.getDefaultValue(), nIdRessource ) );
-                else
-                    jsonObject.accumulate( "Value", getRecordFieldValue( entry.getOrderQuestion( ).replaceFirst("I1_", prefixCode), nIdRessource, nIdForm, entry ) );
+                StringBuilder value = new StringBuilder( );
+                if ( ( entry.getDefaultValue( ) != null ) && !entry.getDefaultValue( ).isEmpty( ) ) {
+                    value.append( getDefaultValue( entry.getDefaultValue(), nIdRessource ));
+                }else {
+                    value.append( getRecordFieldValue( entry.getOrderQuestion( ).replaceFirst("I1_", prefixCode), nIdRessource, nIdForm, entry ));
+                }
 
+                if (!StringUtils.isEmpty( entry.getPrefix( ) ) ) {
+                    value.insert( 0, entry.getPrefix( ) );
+                }
+
+                jsonObject.accumulate( "Value", value.toString( ));
                 jsonArray.add( jsonObject );
             }
         }
@@ -185,17 +194,19 @@ public class BuildJsonBodyService
 
         return jsonObjectFinal.toString( );
     }
-    
+
     private String getDefaultValue(String defaultValue, int nIdFormResponse) {
-    	if (EUDONET_CREATION_DATE_VALUE.equals(defaultValue)) {
-    		FormResponse response = FormResponseHome.findByPrimaryKey(nIdFormResponse);
+        if (EUDONET_CREATION_DATE_VALUE.equals(defaultValue)) {
+            FormResponse response = FormResponseHome.findByPrimaryKey(nIdFormResponse);
             DateFormat sdf = new SimpleDateFormat( "yyyy/MM/dd HH:mm:ss" );
             String strDate = sdf.format( response.getCreation() );
             if ( strDate != null )
+            {
                 return strDate;
-    	}
-    		
-    	return defaultValue;
+            }
+        }
+
+        return defaultValue;
     }
 
     public JSONArray getCreateAnnexeJsonBody( int nIdFile, int nIdTable, List<EudonetRestData> entries, int nIdRessource, int nIdDirectory )
@@ -213,7 +224,7 @@ public class BuildJsonBodyService
                     PhysicalFile physicalFile = PhysicalFileHome.findByPrimaryKey( file.getPhysicalFile( ).getIdPhysicalFile( ) );
                     String strFileName = file.getTitle( );
                     String strContent = "";
-                    if ( physicalFile != null && physicalFile.getValue( ) != null )
+                    if ( ( physicalFile != null ) && ( physicalFile.getValue( ) != null ) )
                     {
                         byte [ ] bytes = physicalFile.getValue( );
                         byte [ ] encoded = Base64.encodeBase64( bytes );

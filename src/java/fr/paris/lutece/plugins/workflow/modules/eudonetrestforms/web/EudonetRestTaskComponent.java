@@ -95,6 +95,7 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
     public static final String PARAMETER_ID_TABLE_EUDONET = "id_tableEudonet";
     public static final String PARAMETER_ID_TABLE_EUDONET_LINK = "id_tableEudonet_link";
     public static final String PARAMETER_ENTRY_DEFAULT_VALUE = "entry_default_value";
+    public static final String PARAMETER_ENTRY_PREFIX_VALUE = "entry_prefix_value";
     public static final String PARAMETER_BASE_URL = "base_url";
     public static final String PARAMETER_SUBSCRIBER_LOGIN = "subscriber_login";
     public static final String PARAMETER_SUBSCRIBER_PASSWORD = "subscriber_password";
@@ -157,11 +158,12 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
             String eudonetTable = request.getParameter( PARAMETER_ID_TABLE_EUDONET );
             String eudonetTableLink = request.getParameter( PARAMETER_ID_TABLE_EUDONET_LINK );
             String eudonetEntryDefaulValue = request.getParameter( PARAMETER_ENTRY_DEFAULT_VALUE );
+            String eudonetEntryPrefixValue = request.getParameter( PARAMETER_ENTRY_PREFIX_VALUE );
 
             EudonetRestData data = new EudonetRestData( );
             data.setIdConfig( task.getId( ) );
 
-            if ( eudonetEntryDefaulValue != null && !eudonetEntryDefaulValue.isEmpty( ) )
+            if ( ( eudonetEntryDefaulValue != null ) && !eudonetEntryDefaulValue.isEmpty( ) )
             {
                 data.setDefaultValue( eudonetEntryDefaulValue );
             }
@@ -169,6 +171,8 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
             {
                 data.setOrderQuestion( ordreEntry );
             }
+
+            data.setPrefix( eudonetEntryPrefixValue );
 
             data.setIdTable( eudonetTable );
             data.setIdAttribut( eudonetAttribut );
@@ -245,7 +249,7 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
             {
                 model.put( MARKER_TASK_EUDONET_CONFIG, _config );
 
-                List<EudonetRestData> entries = (List<EudonetRestData>) _config.getEntry( );
+                List<EudonetRestData> entries = _config.getEntry( );
 
                 model.put( MARKER_ENTRY, entries );
                 nIdForms = _config.getIdForms( );
@@ -287,7 +291,7 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
 
     /**
      * Get the list of forms
-     * 
+     *
      * @return a ReferenceList
      */
     private static ReferenceList getListForms( )
@@ -296,21 +300,21 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
         ReferenceList referenceList = new  ReferenceList();
         if ( CollectionUtils.isNotEmpty(listForms) )
         {
-        	List<ReferenceItem> list = listForms.stream().map(form -> {
-        		ReferenceItem item = new ReferenceItem();
-        		item.setCode(String.valueOf(form.getId()));
-        		item.setName(form.getTitle());
-        		return item;
-        	}).collect(Collectors.toList());
-        	referenceList.addAll( list );
+            List<ReferenceItem> list = listForms.stream().map(form -> {
+                ReferenceItem item = new ReferenceItem();
+                item.setCode(String.valueOf(form.getId()));
+                item.setName(form.getTitle());
+                return item;
+            }).collect(Collectors.toList());
+            referenceList.addAll( list );
         }
 
         return referenceList;
     }
-    
+
     /**
      * Method to get eudonet attributs list
-     * 
+     *
      * @return tables list
      */
     private List<ReferenceItemSorted> getEudonetTables( )
@@ -351,7 +355,7 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
 
     /**
      * Method to get eudonet tables list
-     * 
+     *
      * @return attributs list
      */
     private List<ReferenceItemSorted> getEudonetAttribut( )
@@ -375,7 +379,7 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
             String strToken = token( );
 
             String strIdTableEudonet = _config.getIdTableEudonet( ).split( "-" ) [0];
-            
+
             if ( StringUtils.isNotEmpty(strIdTableEudonet) ) {
                 JSONArray attributListJson = getAttributListJson( strToken, strIdTableEudonet );
 
@@ -414,7 +418,7 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
 
     /**
      * Method to get directory entries list
-     * 
+     *
      * @param nIdDirectory
      *            id directory
      * @param request
@@ -426,18 +430,18 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
         if ( nIdForm != -1 )
         {
             Form form = FormHome.findByPrimaryKey( nIdForm );
-            
+
             List<ReferenceItemSorted> referenceList = new ArrayList<ReferenceItemSorted>( );
-			List<Question> listQuestionByIdForm = QuestionHome.getListQuestionByIdForm( form.getId( ) );
-			
-			listQuestionByIdForm.stream().forEach(question -> {
-				ReferenceItemSorted referenceItem = new ReferenceItemSorted( );
-				referenceItem.setCode( question.getCode() );
-				referenceItem.setName( question.getTitle() );
-	            referenceList.add( referenceItem );
-				
-			});
-			
+            List<Question> listQuestionByIdForm = QuestionHome.getListQuestionByIdForm( form.getId( ) );
+
+            listQuestionByIdForm.stream().forEach(question -> {
+                ReferenceItemSorted referenceItem = new ReferenceItemSorted( );
+                referenceItem.setCode( question.getCode() );
+                referenceItem.setName( question.getTitle() );
+                referenceList.add( referenceItem );
+
+            });
+
             return referenceList;
         }
         else

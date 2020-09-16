@@ -115,6 +115,10 @@
 			<@comboWithParams name="order_entry" default_value=idForms?string additionalParameters="class=\"input-xxlarge\"" items=list_entries />
 		</div>
 		<@comboWithParams name="eudonet_attribut" default_value="" additionalParameters="class=\"input-xxlarge\"" items=list_attribut />
+		#i18n{module.workflow.eudonetrestforms.task_eudonet_config.label.prefix_entry_value} :
+		<div id="id_entry_default_value" style="display:inline-block;" >
+			<input type="text" class="form-control input-sm" name="entry_prefix_value" value=""/>
+		</div>
 		<button type="submit" value="createEntry" name="apply" class="btn btn-primary btn-sm btn-flat">
 			<i class="glyphicon glyphicon-ok-circle"></i>&nbsp;#i18n{module.workflow.eudonetrestforms.task_eudonet_config.button.apply}
 		</button>
@@ -132,6 +136,7 @@
             <th>#i18n{module.workflow.eudonetrestforms.task_eudonet_config.label.entry_value}</th>
             <th>#i18n{module.workflow.eudonetrestforms.task_eudonet_config.label.name_entry_value}</th>
             <th>#i18n{module.workflow.eudonetrestforms.task_eudonet_config.label.default_entry_value}</th>
+            <th>#i18n{module.workflow.eudonetrestforms.task_eudonet_config.label.prefix_entry_value}</th>
             <th>#i18n{portal.util.labelActions}</th>
         </tr>
         <@tableHeadBodySeparator />
@@ -161,6 +166,9 @@
             </td>
             <td>
             	${entrie.defaultValue!}
+            </td>
+            <td>
+            	${entrie.prefix!}
             </td>
         <td>
 	 
