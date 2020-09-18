@@ -2,6 +2,7 @@ package fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.service;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -32,13 +33,12 @@ import net.sf.json.JSONObject;
 
 public class BuildJsonBodyService
 {
-    private static final String FORMS_ENTRY_TYPE_GEOLOCATION = "forms.entryTypeGeolocation";
-    private static final String FORMS_ENTRY_TYPE_DATE = "forms.entryTypeDate";
+    private static final String         FORMS_ENTRY_TYPE_GEOLOCATION = "forms.entryTypeGeolocation";
+    private static final String         FORMS_ENTRY_TYPE_DATE        = "forms.entryTypeDate";
 
-    private static final String EUDONET_CREATION_DATE_VALUE = "creation_date";
+    private static final String         EUDONET_CREATION_DATE_VALUE  = "creation_date";
 
     private static BuildJsonBodyService _singleton;
-
 
     /**
      * @return instance BuildJsonBodyService
@@ -55,7 +55,6 @@ public class BuildJsonBodyService
         return _singleton;
     }
 
-
     /**
      * get record field value
      *
@@ -67,55 +66,67 @@ public class BuildJsonBodyService
     public String getRecordFieldValue( String codeQuestion, int nIdResponse, int nIdForm, EudonetRestData entry )
     {
         String strRecordFieldValue = StringUtils.EMPTY;
-        try {
+        try
+        {
 
-            Question question = QuestionHome.findByCode(codeQuestion);
+            Question question = QuestionHome.findByCode( codeQuestion );
 
-            List<FormQuestionResponse> questionResponse = FormQuestionResponseHome.findFormQuestionResponseByResponseQuestion(nIdResponse, question.getId());
+            List<FormQuestionResponse> questionResponse = FormQuestionResponseHome.findFormQuestionResponseByResponseQuestion( nIdResponse, question.getId( ) );
 
-            if ( CollectionUtils.isNotEmpty(questionResponse) ) {
-                List<Response> responses = questionResponse.get( 0 ).getEntryResponse();
-                if ( CollectionUtils.isNotEmpty(responses)) {
-                    strRecordFieldValue = responses.get(0).getResponseValue();
+            if ( CollectionUtils.isNotEmpty( questionResponse ) )
+            {
+                List<Response> responses = questionResponse.get( 0 ).getEntryResponse( );
+                if ( CollectionUtils.isNotEmpty( responses ) )
+                {
+                    strRecordFieldValue = responses.get( 0 ).getResponseValue( );
 
-                    if (responses.get(0).getEntry().getEntryType().getBeanName().equalsIgnoreCase(FORMS_ENTRY_TYPE_DATE)) {
-                        try {
-                            Date date = DateUtils.parseDate(strRecordFieldValue, "dd/MM/yyyy");
-                            DateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                            String strDate = sdf.format(date);
-                            if (strDate != null)
+                    if ( responses.get( 0 ).getEntry( ).getEntryType( ).getBeanName( ).equalsIgnoreCase( FORMS_ENTRY_TYPE_DATE ) )
+                    {
+                        try
+                        {
+                            Date date = DateUtils.parseDate( strRecordFieldValue, "dd/MM/yyyy" );
+                            DateFormat sdf = new SimpleDateFormat( "yyyy/MM/dd HH:mm:ss" );
+                            String strDate = sdf.format( date );
+                            if ( strDate != null )
                             {
                                 return strDate;
                             }
-                        } catch (Exception e) {
-                            AppLogService.debug(e);
+                        } catch ( Exception e )
+                        {
+                            AppLogService.debug( e );
                         }
                     }
 
-                    if (responses.get(0).getEntry().getEntryType().getBeanName().equalsIgnoreCase(FORMS_ENTRY_TYPE_GEOLOCATION)) {
-                        if (( entry != null ) && entry.getIdAttribut().contains("Géoloc")) {
+                    if ( responses.get( 0 ).getEntry( ).getEntryType( ).getBeanName( ).equalsIgnoreCase( FORMS_ENTRY_TYPE_GEOLOCATION ) )
+                    {
+                        if ( ( entry != null ) && entry.getIdAttribut( ).contains( "Géoloc" ) )
+                        {
                             // Cas d'un champ de type geolocation. On retourne la valeur du field 'X, Y'
-                            Optional<Response> addressX = responses.stream().filter(response -> response.getField().getCode().equals("X")).findFirst();
-                            Optional<Response> addressY = responses.stream().filter(response -> response.getField().getCode().equals("Y")).findFirst();
-                            if (addressX.isPresent() && addressY.isPresent()) {
-                                Double coordX = Double.valueOf(addressX.get().getResponseValue());
-                                Double coordY = Double.valueOf(addressY.get().getResponseValue());
+                            Optional<Response> addressX = responses.stream( ).filter( response -> response.getField( ).getCode( ).equals( "X" ) ).findFirst( );
+                            Optional<Response> addressY = responses.stream( ).filter( response -> response.getField( ).getCode( ).equals( "Y" ) ).findFirst( );
+                            if ( addressX.isPresent( ) && addressY.isPresent( ) )
+                            {
+                                Double coordX = Double.valueOf( addressX.get( ).getResponseValue( ) );
+                                Double coordY = Double.valueOf( addressY.get( ).getResponseValue( ) );
 
-                                strRecordFieldValue = EudonetConversion.lambertToGeographic(coordX, coordY);
+                                strRecordFieldValue = EudonetConversion.lambertToGeographic( coordX, coordY );
                             }
-                        } else {
+                        } else
+                        {
                             // Cas d'un champ de type geolocation. On retourne la valeur du field 'address'
-                            Optional<Response> address = responses.stream().filter(response -> response.getField().getCode().equals("address")).findFirst();
-                            if (address.isPresent()) {
-                                strRecordFieldValue = address.get().getResponseValue();
+                            Optional<Response> address = responses.stream( ).filter( response -> response.getField( ).getCode( ).equals( "address" ) ).findFirst( );
+                            if ( address.isPresent( ) )
+                            {
+                                strRecordFieldValue = address.get( ).getResponseValue( );
                             }
                         }
                     }
 
                 }
             }
-        } catch (Exception e) {
-            AppLogService.debug(e);
+        } catch ( Exception e )
+        {
+            AppLogService.debug( e );
         }
 
         return strRecordFieldValue;
@@ -127,22 +138,26 @@ public class BuildJsonBodyService
      * @param codeQuestion
      * @param nIdResponse
      * @param nIdForm
-     * @return record field value
+     * @return List record field value
      */
-    public File getRecordFileValue( String codeQuestion, int nIdResponse, int nIdForm )
+    public List<File> getRecordFileValue( String codeQuestion, int nIdResponse, int nIdForm )
     {
-        Question question = QuestionHome.findByCode(codeQuestion);
+        Question question = QuestionHome.findByCode( codeQuestion );
 
-        List<FormQuestionResponse> questionResponse = FormQuestionResponseHome.findFormQuestionResponseByResponseQuestion(nIdResponse, question.getId());
+        List<FormQuestionResponse> questionResponse = FormQuestionResponseHome.findFormQuestionResponseByResponseQuestion( nIdResponse, question.getId( ) );
 
-        if ( CollectionUtils.isNotEmpty(questionResponse) ) {
-            List<Response> responses = questionResponse.get( 0 ).getEntryResponse();
-            if ( CollectionUtils.isNotEmpty(responses)) {
-                return FileHome.findByPrimaryKey( responses.get(0).getFile().getIdFile() );
+        List<File> listFile = new ArrayList<File>( );
+
+        if ( CollectionUtils.isNotEmpty( questionResponse ) )
+        {
+            List<Response> responses = questionResponse.get( 0 ).getEntryResponse( );
+            for ( Response response : responses )
+            {
+                listFile.add( FileHome.findByPrimaryKey( response.getFile( ).getIdFile( ) ) );
             }
         }
 
-        return null;
+        return listFile;
     }
 
     public String getCreateRecordJsonBodyLink( int nIdTable, List<EudonetRestData> entries, int nIdRessource, int nIdForm, List<Integer> listTableLinked, String prefixCode )
@@ -152,26 +167,29 @@ public class BuildJsonBodyService
 
         for ( EudonetRestData entry : entries )
         {
-            String strIdTable = entry.getIdTable( ).split( "-" ) [0];
+            String strIdTable = entry.getIdTable( ).split( "-" )[0];
 
             if ( strIdTable.equals( "" + nIdTable ) )
             {
-                String strIdAtt = entry.getIdAttribut( ).split( "-" ) [0];
+                String strIdAtt = entry.getIdAttribut( ).split( "-" )[0];
                 JSONObject jsonObject = new JSONObject( );
 
                 jsonObject.accumulate( "DescId", Integer.parseInt( strIdAtt ) );
                 StringBuilder value = new StringBuilder( );
-                if ( ( entry.getDefaultValue( ) != null ) && !entry.getDefaultValue( ).isEmpty( ) ) {
-                    value.append( getDefaultValue( entry.getDefaultValue(), nIdRessource ));
-                }else {
-                    value.append( getRecordFieldValue( entry.getOrderQuestion( ).replaceFirst("I1_", prefixCode), nIdRessource, nIdForm, entry ));
+                if ( ( entry.getDefaultValue( ) != null ) && !entry.getDefaultValue( ).isEmpty( ) )
+                {
+                    value.append( getDefaultValue( entry.getDefaultValue( ), nIdRessource ) );
+                } else
+                {
+                    value.append( getRecordFieldValue( entry.getOrderQuestion( ).replaceFirst( "I1_", prefixCode ), nIdRessource, nIdForm, entry ) );
                 }
 
-                if (!StringUtils.isEmpty( entry.getPrefix( ) ) ) {
+                if ( !StringUtils.isEmpty( entry.getPrefix( ) ) )
+                {
                     value.insert( 0, entry.getPrefix( ) );
                 }
 
-                jsonObject.accumulate( "Value", value.toString( ));
+                jsonObject.accumulate( "Value", value.toString( ) );
                 jsonArray.add( jsonObject );
             }
         }
@@ -195,11 +213,13 @@ public class BuildJsonBodyService
         return jsonObjectFinal.toString( );
     }
 
-    private String getDefaultValue(String defaultValue, int nIdFormResponse) {
-        if (EUDONET_CREATION_DATE_VALUE.equals(defaultValue)) {
-            FormResponse response = FormResponseHome.findByPrimaryKey(nIdFormResponse);
+    private String getDefaultValue( String defaultValue, int nIdFormResponse )
+    {
+        if ( EUDONET_CREATION_DATE_VALUE.equals( defaultValue ) )
+        {
+            FormResponse response = FormResponseHome.findByPrimaryKey( nIdFormResponse );
             DateFormat sdf = new SimpleDateFormat( "yyyy/MM/dd HH:mm:ss" );
-            String strDate = sdf.format( response.getCreation() );
+            String strDate = sdf.format( response.getCreation( ) );
             if ( strDate != null )
             {
                 return strDate;
@@ -215,30 +235,33 @@ public class BuildJsonBodyService
 
         for ( EudonetRestData entry : entries )
         {
-            String strIdTableLink = entry.getIdTableLink( ).split( "-" ) [0];
+            String strIdTableLink = entry.getIdTableLink( ).split( "-" )[0];
             if ( !strIdTableLink.isEmpty( ) && strIdTableLink.equals( "" + nIdTable ) )
             {
-                File file = getRecordFileValue( entry.getOrderQuestion( ), nIdRessource, nIdDirectory );
-                if ( file != null )
+                List<File> listfiles = getRecordFileValue( entry.getOrderQuestion( ), nIdRessource, nIdDirectory );
+                for ( File file : listfiles )
                 {
-                    PhysicalFile physicalFile = PhysicalFileHome.findByPrimaryKey( file.getPhysicalFile( ).getIdPhysicalFile( ) );
-                    String strFileName = file.getTitle( );
-                    String strContent = "";
-                    if ( ( physicalFile != null ) && ( physicalFile.getValue( ) != null ) )
+                    if ( file != null )
                     {
-                        byte [ ] bytes = physicalFile.getValue( );
-                        byte [ ] encoded = Base64.encodeBase64( bytes );
-                        strContent = new String( encoded );
+                        PhysicalFile physicalFile = PhysicalFileHome.findByPrimaryKey( file.getPhysicalFile( ).getIdPhysicalFile( ) );
+                        String strFileName = file.getTitle( );
+                        String strContent = "";
+                        if ( ( physicalFile != null ) && ( physicalFile.getValue( ) != null ) )
+                        {
+                            byte[] bytes = physicalFile.getValue( );
+                            byte[] encoded = Base64.encodeBase64( bytes );
+                            strContent = new String( encoded );
+                        }
+
+                        JSONObject jsonObject = new JSONObject( );
+                        jsonObject.accumulate( "FileId", nIdFile );
+                        jsonObject.accumulate( "TabId", nIdTable );
+                        jsonObject.accumulate( "FileName", strFileName );
+                        jsonObject.accumulate( "Content", strContent );
+                        jsonObject.accumulate( "IsUrl", false );
+
+                        jsonArray.add( jsonObject );
                     }
-
-                    JSONObject jsonObject = new JSONObject( );
-                    jsonObject.accumulate( "FileId", nIdFile );
-                    jsonObject.accumulate( "TabId", nIdTable );
-                    jsonObject.accumulate( "FileName", strFileName );
-                    jsonObject.accumulate( "Content", strContent );
-                    jsonObject.accumulate( "IsUrl", false );
-
-                    jsonArray.add( jsonObject );
                 }
             }
         }
