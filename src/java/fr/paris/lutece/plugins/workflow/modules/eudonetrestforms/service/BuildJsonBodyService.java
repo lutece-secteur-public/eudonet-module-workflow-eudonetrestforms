@@ -244,7 +244,7 @@ public class BuildJsonBodyService
                     if ( file != null )
                     {
                         PhysicalFile physicalFile = PhysicalFileHome.findByPrimaryKey( file.getPhysicalFile( ).getIdPhysicalFile( ) );
-                        String strFileName = file.getTitle( );
+                        String strFileName = StringUtils.isNotEmpty( entry.getPrefix( ) ) ? entry.getPrefix( )+file.getTitle( ) : file.getTitle( );
                         String strContent = "";
                         if ( ( physicalFile != null ) && ( physicalFile.getValue( ) != null ) )
                         {

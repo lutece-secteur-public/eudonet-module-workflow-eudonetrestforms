@@ -53,4 +53,4 @@ alter table task_create_eudonet_data_cf
 add column eudonet_default_value varchar(255) default NULL;
   
 alter table task_create_eudonet_data_cf
-add column eudonet_prefix varchar(10) default NULL;
+add column eudonet_prefix varchar(255) default NULL;
