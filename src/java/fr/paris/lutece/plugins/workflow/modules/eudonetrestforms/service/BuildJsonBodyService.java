@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.CollectionUtils;
@@ -37,6 +39,7 @@ public class BuildJsonBodyService
     private static final String         FORMS_ENTRY_TYPE_DATE        = "forms.entryTypeDate";
 
     private static final String         EUDONET_CREATION_DATE_VALUE  = "creation_date";
+    private static final Pattern 		patternCodePostal = Pattern.compile("75[0-9]{3}");
 
     private static BuildJsonBodyService _singleton;
 
@@ -99,7 +102,7 @@ public class BuildJsonBodyService
 
                     if ( responses.get( 0 ).getEntry( ).getEntryType( ).getBeanName( ).equalsIgnoreCase( FORMS_ENTRY_TYPE_GEOLOCATION ) )
                     {
-                        if ( ( entry != null ) && entry.getIdAttribut( ).contains( "Géoloc" ) )
+                    	if ( ( entry != null ) && entry.getIdAttribut( ).contains( "Géoloc" ) )
                         {
                             // Cas d'un champ de type geolocation. On retourne la valeur du field 'X, Y'
                             Optional<Response> addressX = responses.stream( ).filter( response -> response.getField( ).getCode( ).equals( "X" ) ).findFirst( );
@@ -110,6 +113,19 @@ public class BuildJsonBodyService
                                 Double coordY = Double.valueOf( addressY.get( ).getResponseValue( ) );
 
                                 strRecordFieldValue = EudonetConversion.lambertToGeographic( coordX, coordY );
+                            }
+                        } else if ( ( entry != null ) && entry.getIdAttribut( ).contains( "CP" ) )
+                        {
+                            // Cas d'un champ de type geolocation. On retourne la valeur du field 'X, Y'
+                            Optional<Response> additionalAddress = responses.stream( ).filter( response -> response.getField( ).getCode( ).equals( "additionalAddress" ) ).findFirst( );
+                            Optional<Response> address = responses.stream( ).filter( response -> response.getField( ).getCode( ).equals( "address" ) ).findFirst( );
+                            if ( additionalAddress.isPresent() && StringUtils.isNotEmpty(additionalAddress.get( ).getResponseValue( )) ) {
+                            	strRecordFieldValue = additionalAddress.get( ).getResponseValue( );
+                            } else if ( address.isPresent( ) )
+                            {
+                                String fulladress = address.get( ).getResponseValue( );
+                                Matcher matcher = patternCodePostal.matcher(fulladress);
+                                strRecordFieldValue = matcher.find() ? matcher.group() : "";
                             }
                         } else
                         {
@@ -131,7 +147,7 @@ public class BuildJsonBodyService
 
         return strRecordFieldValue;
     }
-
+    
     /**
      * get record field value
      *
