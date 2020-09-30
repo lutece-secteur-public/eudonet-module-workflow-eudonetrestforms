@@ -218,7 +218,7 @@ public class BuildJsonBodyService
                 JSONObject jsonObject = new JSONObject( );
 
                 jsonObject.accumulate( "DescId", eudonetLink.getIdTable( ) );
-                jsonObject.accumulate( "Value", "" + eudonetLink.getIdField( ) );
+                jsonObject.accumulate( "Value", eudonetLink.getIdField( ) );
 
                 jsonArray.add( jsonObject );
             }
