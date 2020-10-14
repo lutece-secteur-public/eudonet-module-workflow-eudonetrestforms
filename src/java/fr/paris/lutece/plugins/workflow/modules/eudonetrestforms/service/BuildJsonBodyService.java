@@ -309,4 +309,38 @@ public class BuildJsonBodyService
 
         return null;
     }
+    
+    public String getExistingFileId( int nIdTable, List<EudonetRestData> entries, int nIdRessource, int nIdForm)
+    {
+        JSONObject jsonObjectFinal = new JSONObject( );
+        
+		Optional<EudonetRestData> uniqueEudonetKey = entries.stream()
+				.filter(entry -> entry.getIdTable().startsWith(String.valueOf(nIdTable)))
+				.filter(entry -> entry.getUniqueField().booleanValue()).findFirst();
+		
+		if (uniqueEudonetKey.isPresent()) {
+
+	        jsonObjectFinal.accumulate( "ShowMetadata", false );
+	        jsonObjectFinal.accumulate( "RowsPerPage", 1 );
+	        jsonObjectFinal.accumulate( "NumPage", 0 );
+	        
+	        JSONArray jsonColsArray = new JSONArray( );
+	        jsonColsArray.add(StringUtils.split(uniqueEudonetKey.get().getIdAttribut(), "-")[0]);
+	        jsonObjectFinal.accumulate( "ListCols", jsonColsArray );
+	        
+	        JSONObject jsonCriteriaClause = new JSONObject( );
+	        jsonCriteriaClause.accumulate("Operator", 0);
+	        jsonCriteriaClause.accumulate("Field", StringUtils.split(uniqueEudonetKey.get().getIdAttribut(), "-")[0]);
+			jsonCriteriaClause.accumulate("Value",
+					uniqueEudonetKey.get().getPrefix() + getRecordFieldValue(uniqueEudonetKey.get().getOrderQuestion(),
+							nIdRessource, nIdForm, uniqueEudonetKey.get()));
+	        
+	        JSONObject jsonWhereClause = new JSONObject( );
+	        jsonWhereClause.accumulate("Criteria", jsonCriteriaClause);
+	        
+	        jsonObjectFinal.accumulate("WhereCustom", jsonWhereClause);
+		}
+		
+        return jsonObjectFinal.toString( );
+    }
 }

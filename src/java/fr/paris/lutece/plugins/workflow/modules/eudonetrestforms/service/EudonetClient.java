@@ -200,7 +200,7 @@ public class EudonetClient
      * @param strBodyJson
      * @return ClientResponse
      */
-    public ClientResponse searchRecordByCrieria( String strAuthenticate, String strIdTable, String strBodyJson )
+    public ClientResponse searchRecordByCriteria( String strAuthenticate, String strIdTable, String strBodyJson )
     {
         return _webResource.path( "Search" ).path( strIdTable ).header( "x-auth", strAuthenticate ).type( MediaType.APPLICATION_JSON )
                 .accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class, strBodyJson );

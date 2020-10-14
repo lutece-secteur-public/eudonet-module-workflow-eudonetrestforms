@@ -16,6 +16,7 @@ public class EudonetLinkDAO implements IEudonetLinkDAO
     private static final String SQL_QUERY_SELECT = "SELECT id, id_ressource, id_field, id_table, id_table_link FROM task_eudonetrest_table_link WHERE id = ? ;";
     private static final String SQL_QUERY_INSERT = "INSERT INTO task_eudonetrest_table_link ( id, id_ressource, id_field, id_table, id_table_link ) VALUES ( ?, ?, ?, ?, ? );";
     private static final String SQL_QUERY_DELETE = "DELETE FROM task_eudonetrest_table_link WHERE id = ? ;";
+    private static final String SQL_QUERY_DELETE_RESOURCE = "DELETE FROM task_eudonetrest_table_link WHERE id_ressource = ? ;";
     private static final String SQL_QUERY_UPDATE = "UPDATE task_eudonetrest_table_link SET id_ressource=?, id_field=?, id_table=?, id_table_link=? WHERE id = ? ;";
     private static final String SQL_QUERY_NEW_PK_PARAM = "SELECT max( id ) FROM task_eudonetrest_table_link";
 
@@ -106,6 +107,15 @@ public class EudonetLinkDAO implements IEudonetLinkDAO
     {
         DAOUtil daoUtil = new DAOUtil( SQL_QUERY_DELETE, EudonetRestFormsPlugin.getPlugin( ) );
         daoUtil.setInt( 1, nKey );
+        daoUtil.executeUpdate( );
+        daoUtil.free( );
+    }
+    
+    @Override
+	public void deleteResource( int idResource )
+    {
+        DAOUtil daoUtil = new DAOUtil( SQL_QUERY_DELETE_RESOURCE, EudonetRestFormsPlugin.getPlugin( ) );
+        daoUtil.setInt( 1, idResource );
         daoUtil.executeUpdate( );
         daoUtil.free( );
     }

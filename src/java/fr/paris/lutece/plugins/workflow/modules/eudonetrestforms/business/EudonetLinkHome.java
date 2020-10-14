@@ -6,7 +6,7 @@ import fr.paris.lutece.portal.service.spring.SpringContextService;
 
 public final class EudonetLinkHome
 {
-    private static EudonetLinkDAO _dao = SpringContextService.getBean( "workflow-eudonetrestforms.eudonetLinkDAO" );
+    private static IEudonetLinkDAO _dao = SpringContextService.getBean( "workflow-eudonetrestforms.eudonetLinkDAO" );
 
     /**
      * create a eudonetLink
@@ -36,6 +36,16 @@ public final class EudonetLinkHome
     public static void delete( int nIdEudonetLink )
     {
         _dao.delete( nIdEudonetLink );
+    }
+
+    /**
+     * delete a eudonetLink by nIdResource
+     * 
+     * @param nIdResource
+     */
+    public static void deleteResource( int nIdResource )
+    {
+        _dao.deleteResource( nIdResource );
     }
 
     /**

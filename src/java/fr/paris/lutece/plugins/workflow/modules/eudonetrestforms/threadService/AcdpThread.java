@@ -92,6 +92,10 @@ public class AcdpThread extends Thread
                 createRecordsLink( strToken, bErrorRecordLink, true );
 
                 bError = bErrorRecord && bErrorRecordLink;
+                
+                if (!bError) {
+                	EudonetLinkHome.deleteResource(_nIdResource);
+                }
             }
             else
             {
@@ -201,45 +205,94 @@ public class AcdpThread extends Thread
                 	}
                     try
                     {
-                        String strJsonBody = BuildJsonBodyService.getService( ).getCreateRecordJsonBodyLink( i, _listEuData, _nIdResource, _nIdForm,
-                                idTableListLinked, prefix );
-                        ClientResponse response = _client.createRecord( strToken, "" + i, strJsonBody );
-                        if ( response.getStatus( ) == 200 )
-                        {
-                            String strResponse = response.getEntity( String.class );
-                            JSONObject jsonObject = new JSONObject( );
-                            jsonObject.accumulate( "object", strResponse );
+                    	ClientResponse response = null;
+                    	boolean createRecord = true;
 
-                            String strStatus = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "Success" );
-
-                            if ( strStatus.equals( "true" ) )
+                    	// Véfifie l'existence d'une donnee pour la table
+                    	String strJsonExistingField = BuildJsonBodyService.getService().getExistingFileId(i, _listEuData, _nIdResource, _nIdForm);
+                    	if (StringUtils.isNoneBlank(strJsonExistingField) && !StringUtils.equals("{}", strJsonExistingField)) {
+                    		response = _client.searchRecordByCriteria( strToken, "" + i, strJsonExistingField );
+                    		
+                            if ( response.getStatus( ) == 200 )
                             {
-                                String strFileId = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultData" ).getString( "FileId" );
-                                if ( strFileId != null && !strFileId.isEmpty( ) )
+                                String strResponse = response.getEntity( String.class );
+                                JSONObject jsonObject = new JSONObject( );
+                                jsonObject.accumulate( "object", strResponse );
+
+                                String strStatus = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "Success" );
+
+                                if ( strStatus.equals( "true" ) )
                                 {
-                                    Integer nFileId = Integer.parseInt( strFileId );
+                                    JSONArray rows = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultData" ).getJSONArray("Rows");
+                                    if (rows.size() > 0) {
+                                    	String strFileId = rows.getJSONObject(0).getString( "FileId" );
+                                    	if ( strFileId != null && !strFileId.isEmpty( ) )
+                                        {
+                                            Integer nFileId = Integer.parseInt( strFileId );
+                                            createRecord = false;
 
-                                    if ( isAnnexed( i ) )
-                                        createAnnexes( strToken, nFileId, i, bError );
+                                            EudonetLink eudonetLink = new EudonetLink( );
+                                            eudonetLink.setIdRessource( _nIdResource );
+                                            eudonetLink.setIdField( "" + nFileId );
+                                            eudonetLink.setIdTable( "" + i );
+                                            eudonetLink.setIdTableLink( "" );
 
-                                    EudonetLink eudonetLink = new EudonetLink( );
-                                    eudonetLink.setIdRessource( _nIdResource );
-                                    eudonetLink.setIdField( "" + nFileId );
-                                    eudonetLink.setIdTable( "" + i );
-                                    eudonetLink.setIdTableLink( "" );
-
-                                    EudonetLinkHome.create( eudonetLink );
+                                            EudonetLinkHome.create( eudonetLink );
+                                            
+                                            AppLogService.info( "Use existing FileId : " + strFileId  + " in TableId : " + i);
+                                        }
+                                    }
                                 }
-
-                                AppLogService.info( "Succes Creation - FileId : " + strFileId );
+                                else
+                                {
+                                    String strErrorMessage = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "ErrorMessage" );
+                                    AppLogService.error( "Error Eudonet : " + strErrorMessage );
+                                    bError = true;
+                                }
                             }
-                            else
+                    	}
+                    	
+                    	if (createRecord) {
+                            String strJsonBody = BuildJsonBodyService.getService( ).getCreateRecordJsonBodyLink( i, _listEuData, _nIdResource, _nIdForm,
+                                    idTableListLinked, prefix );
+                            response = _client.createRecord( strToken, "" + i, strJsonBody );
+                            if ( response.getStatus( ) == 200 )
                             {
-                                String strErrorMessage = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "ErrorMessage" );
-                                AppLogService.error( "Error Eudonet : " + strErrorMessage );
-                                bError = true;
+                                String strResponse = response.getEntity( String.class );
+                                JSONObject jsonObject = new JSONObject( );
+                                jsonObject.accumulate( "object", strResponse );
+
+                                String strStatus = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "Success" );
+
+                                if ( strStatus.equals( "true" ) )
+                                {
+                                    String strFileId = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultData" ).getString( "FileId" );
+                                    if ( strFileId != null && !strFileId.isEmpty( ) )
+                                    {
+                                        Integer nFileId = Integer.parseInt( strFileId );
+
+                                        if ( isAnnexed( i ) )
+                                            createAnnexes( strToken, nFileId, i, bError );
+
+                                        EudonetLink eudonetLink = new EudonetLink( );
+                                        eudonetLink.setIdRessource( _nIdResource );
+                                        eudonetLink.setIdField( "" + nFileId );
+                                        eudonetLink.setIdTable( "" + i );
+                                        eudonetLink.setIdTableLink( "" );
+
+                                        EudonetLinkHome.create( eudonetLink );
+                                    }
+
+                                    AppLogService.info( "Succes Creation - FileId : " + strFileId );
+                                }
+                                else
+                                {
+                                    String strErrorMessage = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "ErrorMessage" );
+                                    AppLogService.error( "Error Eudonet : " + strErrorMessage );
+                                    bError = true;
+                                }
                             }
-                        }
+                    	}
                     }
                     catch( Exception ex )
                     {

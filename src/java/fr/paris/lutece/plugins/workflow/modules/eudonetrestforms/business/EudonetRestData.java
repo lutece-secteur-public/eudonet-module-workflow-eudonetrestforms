@@ -52,6 +52,8 @@ public class EudonetRestData
     private String _strDefaultValue;
 
     private String _strPrefix;
+    
+    private Boolean _bUniqueField;
 
     /**
      * @return Id
@@ -184,5 +186,11 @@ public class EudonetRestData
         this._strPrefix = _strPrefix;
     }
 
+    public Boolean getUniqueField( ) {
+    	return _bUniqueField;
+    }
 
+    public void setUniqueField( Boolean _bUniqueField) {
+    	this._bUniqueField = _bUniqueField;
+    }
 }

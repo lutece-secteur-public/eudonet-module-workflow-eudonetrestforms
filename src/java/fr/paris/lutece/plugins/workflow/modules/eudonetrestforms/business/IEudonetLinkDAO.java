@@ -73,4 +73,6 @@ public interface IEudonetLinkDAO
      *            the Plugin
      */
     void delete( int nKey );
+
+	void deleteResource(int idResource);
 }

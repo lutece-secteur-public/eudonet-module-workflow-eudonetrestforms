@@ -96,6 +96,7 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
     public static final String PARAMETER_ID_TABLE_EUDONET_LINK = "id_tableEudonet_link";
     public static final String PARAMETER_ENTRY_DEFAULT_VALUE = "entry_default_value";
     public static final String PARAMETER_ENTRY_PREFIX_VALUE = "entry_prefix_value";
+    public static final String PARAMETER_ENTRY_UNIQUE_KEY = "unique_entry_value";
     public static final String PARAMETER_BASE_URL = "base_url";
     public static final String PARAMETER_SUBSCRIBER_LOGIN = "subscriber_login";
     public static final String PARAMETER_SUBSCRIBER_PASSWORD = "subscriber_password";
@@ -159,6 +160,7 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
             String eudonetTableLink = request.getParameter( PARAMETER_ID_TABLE_EUDONET_LINK );
             String eudonetEntryDefaulValue = request.getParameter( PARAMETER_ENTRY_DEFAULT_VALUE );
             String eudonetEntryPrefixValue = request.getParameter( PARAMETER_ENTRY_PREFIX_VALUE );
+            String eudonetUniqueEntryValue = request.getParameter( PARAMETER_ENTRY_UNIQUE_KEY );
 
             EudonetRestData data = new EudonetRestData( );
             data.setIdConfig( task.getId( ) );
@@ -173,6 +175,7 @@ public class EudonetRestTaskComponent extends NoFormTaskComponent
             }
 
             data.setPrefix( eudonetEntryPrefixValue );
+            data.setUniqueField(Boolean.valueOf(eudonetUniqueEntryValue));
 
             data.setIdTable( eudonetTable );
             data.setIdAttribut( eudonetAttribut );

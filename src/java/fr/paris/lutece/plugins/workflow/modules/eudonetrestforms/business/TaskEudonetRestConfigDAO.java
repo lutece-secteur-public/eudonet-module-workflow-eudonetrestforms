@@ -53,10 +53,10 @@ public class TaskEudonetRestConfigDAO implements ITaskConfigDAO<TaskEudonetRestC
     private static final String SQL_QUERY_DELETE = "DELETE FROM task_create_eudonetforms_cf WHERE id_task = ? ;";
     private static final String SQL_QUERY_UPDATE = "UPDATE task_create_eudonetforms_cf SET id_forms=?, id_table=?, base_url=?, subscriber_login=?, subscriber_password=?, base_name=?, user_login=?, user_password=?, user_lang=?, product_name=? WHERE id_task = ? ;";
     private static final String SQL_QUERY_NEW_PK_PARAM = "SELECT max( id_attribut ) FROM task_create_eudonet_data_cf";
-    private static final String SQL_QUERY_EUDONET_SELECT = "SELECT id_attribut, id_task, order_question, eudonet_key, eudonet_key_table, eudonet_key_table_link, eudonet_default_value, eudonet_prefix FROM task_create_eudonet_data_cf WHERE id_task = ? ;";
-    private static final String SQL_QUERY_EUDONET_INSERT = "INSERT INTO task_create_eudonet_data_cf (id_attribut, id_task, order_question, eudonet_key, eudonet_key_table, eudonet_key_table_link, eudonet_default_value, eudonet_prefix ) VALUES ( ?, ?, ?, ? , ? , ? , ?, ?);";
+    private static final String SQL_QUERY_EUDONET_SELECT = "SELECT id_attribut, id_task, order_question, eudonet_key, eudonet_key_table, eudonet_key_table_link, eudonet_default_value, eudonet_prefix, eudonet_unique_field FROM task_create_eudonet_data_cf WHERE id_task = ? ;";
+    private static final String SQL_QUERY_EUDONET_INSERT = "INSERT INTO task_create_eudonet_data_cf (id_attribut, id_task, order_question, eudonet_key, eudonet_key_table, eudonet_key_table_link, eudonet_default_value, eudonet_prefix, eudonet_unique_field ) VALUES ( ?, ?, ?, ? , ? , ? , ?, ?, ?);";
     private static final String SQL_QUERY_EUDONET_DELETE = "DELETE FROM task_create_eudonet_data_cf WHERE id_attribut = ? ;";
-    private static final String SQL_QUERY_EUDONET_UPDATE = "UPDATE task_create_eudonet_data_cf SET id_task=?, order_question=?, eudonet_key=?, eudonet_key_table=?, eudonet_key_table_link=?, eudonet_default_value=? , eudonet_prefix=? WHERE id_attribut = ? ;";
+    private static final String SQL_QUERY_EUDONET_UPDATE = "UPDATE task_create_eudonet_data_cf SET id_task=?, order_question=?, eudonet_key=?, eudonet_key_table=?, eudonet_key_table_link=?, eudonet_default_value=? , eudonet_prefix=?, eudonet_unique_field=? WHERE id_attribut = ? ;";
 
     /**
      * Generates a new primary key
@@ -197,6 +197,7 @@ public class TaskEudonetRestConfigDAO implements ITaskConfigDAO<TaskEudonetRestC
         daoUtil.setString( 6, eudonetData.getIdTableLink( ) );
         daoUtil.setString( 7, eudonetData.getDefaultValue( ) );
         daoUtil.setString( 8, eudonetData.getPrefix( ) );
+        daoUtil.setBoolean( 9, eudonetData.getUniqueField( ) );
 
         daoUtil.executeUpdate( );
         daoUtil.free( );
@@ -232,6 +233,7 @@ public class TaskEudonetRestConfigDAO implements ITaskConfigDAO<TaskEudonetRestC
         daoUtil.setString( 6, eudonetData.getIdTableLink( ) );
         daoUtil.setString( 7, eudonetData.getDefaultValue( ) );
         daoUtil.setString( 8, eudonetData.getPrefix( ) );
+        daoUtil.setBoolean( 9, eudonetData.getUniqueField( ) );
 
         daoUtil.executeUpdate( );
         daoUtil.free( );
@@ -269,6 +271,8 @@ public class TaskEudonetRestConfigDAO implements ITaskConfigDAO<TaskEudonetRestC
             parameter.setDefaultValue( daoUtil.getString( 7 ) );
 
             parameter.setPrefix( daoUtil.getString( 8 ) );
+            
+            parameter.setUniqueField( daoUtil.getBoolean( 9 ) );
 
             parameterList.add( parameter );
         }
