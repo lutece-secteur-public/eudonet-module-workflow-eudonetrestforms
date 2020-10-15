@@ -171,7 +171,7 @@ public class AcdpThread extends Thread
                 else
                 {
                     String strErrorMessage = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "ErrorMessage" );
-                    AppLogService.error( "Error Eudonet : " + strErrorMessage );
+                    AppLogService.error( "Error Authentification Eudonet : " + strErrorMessage );
                 }
 
             }
@@ -238,8 +238,8 @@ public class AcdpThread extends Thread
                                             eudonetLink.setIdTableLink( "" );
 
                                             EudonetLinkHome.create( eudonetLink );
-                                            
-                                            AppLogService.info( "Use existing FileId : " + strFileId  + " in TableId : " + i);
+
+                                            AppLogService.info( String.format("[%s] Use existing FileId %s in TableId %s", _nIdResource, strFileId , i));
                                         }
                                     }
                                 }
@@ -283,7 +283,7 @@ public class AcdpThread extends Thread
                                         EudonetLinkHome.create( eudonetLink );
                                     }
 
-                                    AppLogService.info( "Succes Creation - FileId : " + strFileId );
+                                    AppLogService.info( String.format("[%s] Succes Creation FileId %s in TableId %s", _nIdResource, strFileId , i));
                                 }
                                 else
                                 {
@@ -330,12 +330,12 @@ public class AcdpThread extends Thread
                         {
                             String strFileId = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultData" ).getString( "AnnexId" );
 
-                            AppLogService.info( "Succes Add Annexe - FileId : " + strFileId );
+                            AppLogService.info( String.format("[%s] Succes Add Annexe FileId %s in TableId %s", _nIdResource, strFileId , nIdTable));
                         }
                         else
                         {
                             String strErrorMessage = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "ErrorMessage" );
-                            AppLogService.error( "Error Eudonet : adding Annexe " + strErrorMessage );
+                            AppLogService.error( String.format("[%s] Error Eudonet : adding Annexe %s", strErrorMessage));
                             bError = true;
                         }
                     }
