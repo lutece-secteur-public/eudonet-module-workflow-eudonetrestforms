@@ -19,5 +19,14 @@
 	
 	<!-- if the plugin must have a connection pool with parameter : 1 - yes, 0 - no -->	
     <db-pool-required>1</db-pool-required>
-
+	
+	<!-- Daemons -->
+    <daemons>
+		<daemon>
+			<daemon-id>relanceEudonetDaemon</daemon-id>
+			<daemon-name>workflow-eudonetrestforms.daemon.relanceEudonetDaemon.name</daemon-name>
+			<daemon-description>workflow-eudonetrestforms.daemon.relanceEudonetDaemon.description</daemon-description>
+			<daemon-class>fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.service.daemon.RelanceEudonetDaemon</daemon-class>
+		</daemon>
+	</daemons>
 </plug-in>
