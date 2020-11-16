@@ -7,13 +7,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.sun.jersey.api.client.ClientResponse;
 
-import fr.paris.lutece.plugins.forms.business.Form;
-import fr.paris.lutece.plugins.forms.business.FormHome;
-import fr.paris.lutece.plugins.forms.business.FormResponse;
-import fr.paris.lutece.plugins.forms.business.FormResponseHome;
-import fr.paris.lutece.plugins.managewferror.business.Resource;
-import fr.paris.lutece.plugins.managewferror.business.service.IProcessTaskErrorService;
-import fr.paris.lutece.plugins.managewferror.business.service.ProcessTaskErrorService;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.business.EudonetLink;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.business.EudonetLinkHome;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.business.EudonetRestData;
@@ -29,7 +22,7 @@ public class AcdpThread extends Thread
 {
     private static final String THREAD_NAME = "eudonetRest-export-Acdp-thread";
     private static final String ACTION = "ACDP ACTION";
-    
+
     private static final Integer INSTALLATIONS_TABLE = 1500; // "1500-Installations"
     private static final String NEXT_INSTALLATION_CODE = "autreInstallation";
 
@@ -42,11 +35,9 @@ public class AcdpThread extends Thread
     private EudonetRestException _eudonetException;
     private boolean _bRunning;
 
-    IProcessTaskErrorService _erroService = ProcessTaskErrorService.getService( );
-
     /**
      * constructor
-     * 
+     *
      * @param client
      * @param service
      * @param listEuData
@@ -74,11 +65,6 @@ public class AcdpThread extends Thread
         boolean bErrorRecord = false;
         boolean bErrorRecordLink = false;
 
-        FormResponse formResponse = FormResponseHome.findByPrimaryKey( _nIdResource );
-        
-        Resource gfaResourceDTO = getResourceDTO( formResponse );
-        fr.paris.lutece.plugins.managewferror.business.Error error = gfaResourceDTO.getError( ).get( 0 );
-
         try
         {
             _bRunning = true;
@@ -92,16 +78,15 @@ public class AcdpThread extends Thread
                 createRecordsLink( strToken, bErrorRecordLink, true );
 
                 bError = bErrorRecord && bErrorRecordLink;
-                
+
                 if (!bError) {
-                	EudonetLinkHome.deleteResource(_nIdResource);
+                    EudonetLinkHome.deleteResource(_nIdResource);
                 }
             }
             else
             {
                 AppLogService.error( "Erreur d'authentification sur eudonet" );
-                bError = true;
-                error.setError( "Erreur d'authentification sur eudonet" );
+                _eudonetException = new EudonetRestException( String.valueOf( _nIdResource ) , "Erreur d'authentification sur eudonet" );
             }
 
         }
@@ -109,21 +94,11 @@ public class AcdpThread extends Thread
         {
             AppLogService.error( "error calling addProjectsInEudonet method : " + ex.getMessage( ), ex );
             _bRunning = false;
-            bError = true;
-            error.setError( "error calling addProjectsInEudonet method : " + ex.getMessage( ) );
-        }
-
-        if ( bError )
-        {
-            _erroService.saveErrorTrace( gfaResourceDTO );
-        }
-        else
-        {
-            _erroService.deleteErrorTrace( formResponse.getId( ) );
+            _eudonetException = new EudonetRestException( String.valueOf( _nIdResource ) , ex.getMessage( ) );
         }
 
         _bRunning = false;
-        this.interrupt( );
+        interrupt( );
     }
 
     public EudonetRestException getEudonetException( )
@@ -133,7 +108,7 @@ public class AcdpThread extends Thread
 
     /**
      * Return the running state
-     * 
+     *
      * @return the running state
      */
     public boolean isRunning( )
@@ -146,7 +121,7 @@ public class AcdpThread extends Thread
      */
     public void setRuning( boolean bool )
     {
-        this._bRunning = bool;
+        _bRunning = bool;
     }
 
     public String token( )
@@ -192,27 +167,27 @@ public class AcdpThread extends Thread
             for ( Integer i : idTableList )
             {
                 List<Integer> idTableListLinked = getTableListLinked( strToken, i );
-                
+
                 int iteration = 1;
                 boolean hasNextIteration = false;
-                
+
                 do {
-                	String prefix = StringUtils.EMPTY;
-                	if ( INSTALLATIONS_TABLE.equals(i) ) {
-                		prefix = "I" + iteration + "_";
-                    	String nextInstallationValue = BuildJsonBodyService.getService( ).getRecordFieldValue(prefix + NEXT_INSTALLATION_CODE, _nIdResource, _nIdForm, null);
-                    	hasNextIteration = "YES".equals(nextInstallationValue) ? true : false;
-                	}
+                    String prefix = StringUtils.EMPTY;
+                    if ( INSTALLATIONS_TABLE.equals(i) ) {
+                        prefix = "I" + iteration + "_";
+                        String nextInstallationValue = BuildJsonBodyService.getService( ).getRecordFieldValue(prefix + NEXT_INSTALLATION_CODE, _nIdResource, _nIdForm, null);
+                        hasNextIteration = "YES".equals(nextInstallationValue) ? true : false;
+                    }
                     try
                     {
-                    	ClientResponse response = null;
-                    	boolean createRecord = true;
+                        ClientResponse response = null;
+                        boolean createRecord = true;
 
-                    	// Véfifie l'existence d'une donnee pour la table
-                    	String strJsonExistingField = BuildJsonBodyService.getService().getExistingFileId(i, _listEuData, _nIdResource, _nIdForm);
-                    	if (StringUtils.isNoneBlank(strJsonExistingField) && !StringUtils.equals("{}", strJsonExistingField)) {
-                    		response = _client.searchRecordByCriteria( strToken, "" + i, strJsonExistingField );
-                    		
+                        // Véfifie l'existence d'une donnee pour la table
+                        String strJsonExistingField = BuildJsonBodyService.getService().getExistingFileId(i, _listEuData, _nIdResource, _nIdForm);
+                        if (StringUtils.isNoneBlank(strJsonExistingField) && !StringUtils.equals("{}", strJsonExistingField)) {
+                            response = _client.searchRecordByCriteria( strToken, "" + i, strJsonExistingField );
+
                             if ( response.getStatus( ) == 200 )
                             {
                                 String strResponse = response.getEntity( String.class );
@@ -225,8 +200,8 @@ public class AcdpThread extends Thread
                                 {
                                     JSONArray rows = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultData" ).getJSONArray("Rows");
                                     if (rows.size() > 0) {
-                                    	String strFileId = rows.getJSONObject(0).getString( "FileId" );
-                                    	if ( strFileId != null && !strFileId.isEmpty( ) )
+                                        String strFileId = rows.getJSONObject(0).getString( "FileId" );
+                                        if ( ( strFileId != null ) && !strFileId.isEmpty( ) )
                                         {
                                             Integer nFileId = Integer.parseInt( strFileId );
                                             createRecord = false;
@@ -250,9 +225,9 @@ public class AcdpThread extends Thread
                                     bError = true;
                                 }
                             }
-                    	}
-                    	
-                    	if (createRecord) {
+                        }
+
+                        if (createRecord) {
                             String strJsonBody = BuildJsonBodyService.getService( ).getCreateRecordJsonBodyLink( i, _listEuData, _nIdResource, _nIdForm,
                                     idTableListLinked, prefix );
                             response = _client.createRecord( strToken, "" + i, strJsonBody );
@@ -267,12 +242,14 @@ public class AcdpThread extends Thread
                                 if ( strStatus.equals( "true" ) )
                                 {
                                     String strFileId = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultData" ).getString( "FileId" );
-                                    if ( strFileId != null && !strFileId.isEmpty( ) )
+                                    if ( ( strFileId != null ) && !strFileId.isEmpty( ) )
                                     {
                                         Integer nFileId = Integer.parseInt( strFileId );
 
                                         if ( isAnnexed( i ) )
+                                        {
                                             createAnnexes( strToken, nFileId, i, bError );
+                                        }
 
                                         EudonetLink eudonetLink = new EudonetLink( );
                                         eudonetLink.setIdRessource( _nIdResource );
@@ -292,7 +269,7 @@ public class AcdpThread extends Thread
                                     bError = true;
                                 }
                             }
-                    	}
+                        }
                     }
                     catch( Exception ex )
                     {
@@ -300,12 +277,12 @@ public class AcdpThread extends Thread
                         bError = true;
                     }
 
-                	iteration++;
+                    iteration++;
                 } while (hasNextIteration);
             }
         }
     }
-    
+
     public void createAnnexes( String strToken, int nIdFile, int nIdTable, boolean bError )
     {
         if ( strToken != null )
@@ -456,33 +433,10 @@ public class AcdpThread extends Thread
     {
         List<Integer> idTableListDistinct = getTableListDistinct( );
         List<Integer> idTableListNotLink = getTableListNotLink( strToken );
-        
+
         idTableListDistinct.removeAll(idTableListNotLink);
 
         return idTableListDistinct;
     }
 
-    public Resource getResourceDTO( FormResponse formResponse )
-    {
-        Resource resource = new Resource( );
-        resource.setIdResource( formResponse.getId( ) );
-        resource.setAction( _nIdAction );
-        resource.setDescription( ACTION );
-        resource.setStatus( Resource.STATUS_KO );
-        
-        Form form = FormHome.findByPrimaryKey(_nIdForm);
-        if (form != null) {
-        	resource.setIdWorkflow( form.getIdWorkflow() );
-        }
-
-        List<fr.paris.lutece.plugins.managewferror.business.Error> listError = new ArrayList<fr.paris.lutece.plugins.managewferror.business.Error>( );
-        fr.paris.lutece.plugins.managewferror.business.Error error = new fr.paris.lutece.plugins.managewferror.business.Error( );
-        java.sql.Timestamp date = new java.sql.Timestamp( System.currentTimeMillis( ) );
-        error.setDateError( date );
-        error.setAction( ACTION );
-        listError.add( error );
-        resource.setError( listError );
-
-        return resource;
-    }
 }
