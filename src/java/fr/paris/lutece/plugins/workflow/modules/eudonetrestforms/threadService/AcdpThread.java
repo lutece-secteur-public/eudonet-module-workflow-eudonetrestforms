@@ -7,6 +7,13 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.sun.jersey.api.client.ClientResponse;
 
+import fr.paris.lutece.plugins.forms.business.Form;
+import fr.paris.lutece.plugins.forms.business.FormHome;
+import fr.paris.lutece.plugins.forms.business.FormResponse;
+import fr.paris.lutece.plugins.forms.business.FormResponseHome;
+import fr.paris.lutece.plugins.managewferror.business.Resource;
+import fr.paris.lutece.plugins.managewferror.business.service.IProcessTaskErrorService;
+import fr.paris.lutece.plugins.managewferror.business.service.ProcessTaskErrorService;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.business.EudonetLink;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.business.EudonetLinkHome;
 import fr.paris.lutece.plugins.workflow.modules.eudonetrestforms.business.EudonetRestData;
@@ -21,6 +28,7 @@ import net.sf.json.JSONObject;
 public class AcdpThread extends Thread
 {
     private static final String THREAD_NAME = "eudonetRest-export-Acdp-thread";
+    private static final String ACTION = "ACDP ACTION";
 
     private static final Integer INSTALLATIONS_TABLE = 1500; // "1500-Installations"
     private static final String NEXT_INSTALLATION_CODE = "autreInstallation";
@@ -33,6 +41,8 @@ public class AcdpThread extends Thread
     private int _nIdAction;
     private EudonetRestException _eudonetException;
     private boolean _bRunning;
+
+    IProcessTaskErrorService _erroService = ProcessTaskErrorService.getService( );
 
     /**
      * constructor
@@ -63,6 +73,11 @@ public class AcdpThread extends Thread
         boolean bError = false;
         boolean bErrorRecord = false;
         boolean bErrorRecordLink = false;
+        
+        FormResponse formResponse = FormResponseHome.findByPrimaryKey( _nIdResource );
+        
+        Resource gfaResourceDTO = getResourceDTO( formResponse );
+        fr.paris.lutece.plugins.managewferror.business.Error error = gfaResourceDTO.getError( ).get( 0 );
 
         try
         {
@@ -85,7 +100,9 @@ public class AcdpThread extends Thread
             else
             {
                 AppLogService.error( "Erreur d'authentification sur eudonet" );
-                _eudonetException = new EudonetRestException( String.valueOf( _nIdResource ) , "Erreur d'authentification sur eudonet" );
+                bError = true;
+                error.setError( "Erreur d'authentification sur eudonet" );
+//                _eudonetException = new EudonetRestException( String.valueOf( _nIdResource ) , "Erreur d'authentification sur eudonet" );
             }
 
         }
@@ -93,7 +110,18 @@ public class AcdpThread extends Thread
         {
             AppLogService.error( "error calling addProjectsInEudonet method : " + ex.getMessage( ), ex );
             _bRunning = false;
-            _eudonetException = new EudonetRestException( String.valueOf( _nIdResource ) , ex.getMessage( ) );
+            bError = true;
+            error.setError( "error calling addProjectsInEudonet method : " + ex.getMessage( ) );
+//            _eudonetException = new EudonetRestException( String.valueOf( _nIdResource ) , ex.getMessage( ) );
+        }
+
+        if ( bError )
+        {
+            _erroService.saveErrorTrace( gfaResourceDTO );
+        }
+        else
+        {
+            _erroService.deleteErrorTrace( formResponse.getId( ) );
         }
 
         _bRunning = false;
@@ -450,4 +478,27 @@ public class AcdpThread extends Thread
         return idTableListDistinct;
     }
 
+    public Resource getResourceDTO( FormResponse formResponse )
+    {
+        Resource resource = new Resource( );
+        resource.setIdResource( formResponse.getId( ) );
+        resource.setAction( _nIdAction );
+        resource.setDescription( ACTION );
+        resource.setStatus( Resource.STATUS_KO );
+        
+        Form form = FormHome.findByPrimaryKey(_nIdForm);
+        if (form != null) {
+        	resource.setIdWorkflow( form.getIdWorkflow() );
+        }
+
+        List<fr.paris.lutece.plugins.managewferror.business.Error> listError = new ArrayList<fr.paris.lutece.plugins.managewferror.business.Error>( );
+        fr.paris.lutece.plugins.managewferror.business.Error error = new fr.paris.lutece.plugins.managewferror.business.Error( );
+        java.sql.Timestamp date = new java.sql.Timestamp( System.currentTimeMillis( ) );
+        error.setDateError( date );
+        error.setAction( ACTION );
+        listError.add( error );
+        resource.setError( listError );
+
+        return resource;
+    }
 }
