@@ -310,7 +310,7 @@ public class BuildJsonBodyService
         return null;
     }
     
-    public String getExistingFileId( int nIdTable, List<EudonetRestData> entries, int nIdRessource, int nIdForm)
+    public String getExistingFileId( int nIdTable, List<EudonetRestData> entries, int nIdRessource, int nIdForm, String prefixCode)
     {
         JSONObject jsonObjectFinal = new JSONObject( );
         
@@ -332,9 +332,9 @@ public class BuildJsonBodyService
 	        jsonCriteriaClause.accumulate("Operator", 0);
 	        jsonCriteriaClause.accumulate("Field", StringUtils.split(uniqueEudonetKey.get().getIdAttribut(), "-")[0]);
 			jsonCriteriaClause.accumulate("Value",
-					uniqueEudonetKey.get().getPrefix() + getRecordFieldValue(uniqueEudonetKey.get().getOrderQuestion(),
+					uniqueEudonetKey.get().getPrefix() + getRecordFieldValue(uniqueEudonetKey.get().getOrderQuestion().replaceFirst( "I1_", prefixCode ),
 							nIdRessource, nIdForm, uniqueEudonetKey.get()));
-	        
+			
 	        JSONObject jsonWhereClause = new JSONObject( );
 	        jsonWhereClause.accumulate("Criteria", jsonCriteriaClause);
 	        

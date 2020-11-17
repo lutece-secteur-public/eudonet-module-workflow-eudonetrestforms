@@ -21,7 +21,6 @@ import net.sf.json.JSONObject;
 public class AcdpThread extends Thread
 {
     private static final String THREAD_NAME = "eudonetRest-export-Acdp-thread";
-    private static final String ACTION = "ACDP ACTION";
 
     private static final Integer INSTALLATIONS_TABLE = 1500; // "1500-Installations"
     private static final String NEXT_INSTALLATION_CODE = "autreInstallation";
@@ -159,7 +158,7 @@ public class AcdpThread extends Thread
         return null;
     }
 
-    public void createRecordsLink( String strToken, boolean bError, boolean tableLink )
+    public void createRecordsLink( String strToken, boolean bError, boolean tableLink ) throws EudonetRestException
     {
         if ( strToken != null )
         {
@@ -184,7 +183,7 @@ public class AcdpThread extends Thread
                         boolean createRecord = true;
 
                         // Véfifie l'existence d'une donnee pour la table
-                        String strJsonExistingField = BuildJsonBodyService.getService().getExistingFileId(i, _listEuData, _nIdResource, _nIdForm);
+                        String strJsonExistingField = BuildJsonBodyService.getService().getExistingFileId(i, _listEuData, _nIdResource, _nIdForm, prefix);
                         if (StringUtils.isNoneBlank(strJsonExistingField) && !StringUtils.equals("{}", strJsonExistingField)) {
                             response = _client.searchRecordByCriteria( strToken, "" + i, strJsonExistingField );
 
@@ -223,6 +222,8 @@ public class AcdpThread extends Thread
                                     String strErrorMessage = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "ErrorMessage" );
                                     AppLogService.error( "Error Eudonet : " + strErrorMessage );
                                     bError = true;
+                                    
+                                    throw new EudonetRestException(String.valueOf(_nIdResource), "Error sur la recherche de donnees existantes dans Eudonet");
                                 }
                             }
                         }
@@ -276,6 +277,10 @@ public class AcdpThread extends Thread
                         AppLogService.error( "Erreur to create table : " + i, ex );
                         bError = true;
                     }
+                    
+                    if (bError) {
+                        throw new EudonetRestException(String.valueOf(_nIdResource));
+                    }
 
                     iteration++;
                 } while (hasNextIteration);
@@ -283,7 +288,7 @@ public class AcdpThread extends Thread
         }
     }
 
-    public void createAnnexes( String strToken, int nIdFile, int nIdTable, boolean bError )
+    public boolean createAnnexes( String strToken, int nIdFile, int nIdTable, boolean bError ) throws EudonetRestException
     {
         if ( strToken != null )
         {
@@ -312,7 +317,7 @@ public class AcdpThread extends Thread
                         else
                         {
                             String strErrorMessage = jsonObject.getJSONObject( "object" ).getJSONObject( "ResultInfos" ).getString( "ErrorMessage" );
-                            AppLogService.error( String.format("[%s] Error Eudonet : adding Annexe %s", strErrorMessage));
+                            AppLogService.error( String.format("[%s] Error Eudonet : adding Annexe %s", _nIdResource, strErrorMessage));
                             bError = true;
                         }
                     }
@@ -320,10 +325,16 @@ public class AcdpThread extends Thread
             }
             catch( Exception ex )
             {
-                AppLogService.error( "Erreur to create table : " + nIdTable, ex );
+                AppLogService.error( "Erreur to create annexe table : " + nIdTable, ex );
                 bError = true;
             }
         }
+        
+        if (bError) {
+            throw new EudonetRestException(String.valueOf(_nIdResource));
+        }
+        
+        return bError;
     }
 
     public List<Integer> getTableListDistinct( )
