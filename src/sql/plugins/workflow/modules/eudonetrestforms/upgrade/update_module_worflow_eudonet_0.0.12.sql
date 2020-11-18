@@ -129,3 +129,10 @@ VALUES(1, 1, 9, 19);
 INSERT INTO managewferror_config
 (id_workflow, id_workflow_mapping, id_config, title)
 VALUES(1, 1, 1, 'CONFIG FOR EUDONET');
+
+-- Droit pour l ecran erreur WF
+DELETE FROM core_user_right
+WHERE id_right='WFERROR_MANAGEMENT';
+
+INSERT INTO core_user_right (id_right, id_user)
+VALUES('WFERROR_MANAGEMENT', 1);
