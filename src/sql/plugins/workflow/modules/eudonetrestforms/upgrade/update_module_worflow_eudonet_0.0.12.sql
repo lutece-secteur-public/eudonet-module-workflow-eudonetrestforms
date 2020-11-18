@@ -1,7 +1,7 @@
 -- Action relance eudonet
 INSERT INTO workflow_action
 (id_action, name, description, id_workflow, id_state_before, id_state_after, id_icon, is_automatic, is_mass_action, display_order, is_automatic_reflexive_action)
-VALUES(19, 'Relance Envoi Eudonet', 'Renvoie des informations vers Eudonet', 1, 2, 2, 1, 0, 0, 6, 0);
+VALUES(19, 'Relance Envoi Eudonet', 'Renvoie des informations vers Eudonet', 1, 3, 2, 1, 0, 0, 6, 0);
 
 -- Tache liee à l'action
 INSERT INTO workflow_task
