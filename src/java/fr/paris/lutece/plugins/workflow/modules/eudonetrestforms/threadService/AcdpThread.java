@@ -277,7 +277,7 @@ public class AcdpThread extends Thread
 
                                         if ( isAnnexed( i ) )
                                         {
-                                            createAnnexes( strToken, nFileId, i, bError );
+                                            createAnnexes( strToken, nFileId, i, bError, prefix );
                                         }
 
                                         EudonetLink eudonetLink = new EudonetLink( );
@@ -316,13 +316,13 @@ public class AcdpThread extends Thread
         }
     }
 
-    public boolean createAnnexes( String strToken, int nIdFile, int nIdTable, boolean bError ) throws EudonetRestException
+    public boolean createAnnexes( String strToken, int nIdFile, int nIdTable, boolean bError, String prefix ) throws EudonetRestException
     {
         if ( strToken != null )
         {
             try
             {
-                JSONArray jSONArray = BuildJsonBodyService.getService( ).getCreateAnnexeJsonBody( nIdFile, nIdTable, _listEuData, _nIdResource, _nIdForm );
+                JSONArray jSONArray = BuildJsonBodyService.getService( ).getCreateAnnexeJsonBody( nIdFile, nIdTable, _listEuData, _nIdResource, _nIdForm, prefix );
                 for ( int index = 0; index < jSONArray.size( ); index++ )
                 {
                     JSONObject jObject = jSONArray.getJSONObject( index );

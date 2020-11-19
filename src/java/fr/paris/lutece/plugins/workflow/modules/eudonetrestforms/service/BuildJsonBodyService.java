@@ -245,7 +245,7 @@ public class BuildJsonBodyService
         return defaultValue;
     }
 
-    public JSONArray getCreateAnnexeJsonBody( int nIdFile, int nIdTable, List<EudonetRestData> entries, int nIdRessource, int nIdDirectory )
+    public JSONArray getCreateAnnexeJsonBody( int nIdFile, int nIdTable, List<EudonetRestData> entries, int nIdRessource, int nIdDirectory, String prefixCode )
     {
         JSONArray jsonArray = new JSONArray( );
 
@@ -254,7 +254,7 @@ public class BuildJsonBodyService
             String strIdTableLink = entry.getIdTableLink( ).split( "-" )[0];
             if ( !strIdTableLink.isEmpty( ) && strIdTableLink.equals( "" + nIdTable ) )
             {
-                List<File> listfiles = getRecordFileValue( entry.getOrderQuestion( ), nIdRessource, nIdDirectory );
+                List<File> listfiles = getRecordFileValue( entry.getOrderQuestion( ).replaceFirst( "I1_", prefixCode ), nIdRessource, nIdDirectory );
                 for ( File file : listfiles )
                 {
                     if ( file != null )
