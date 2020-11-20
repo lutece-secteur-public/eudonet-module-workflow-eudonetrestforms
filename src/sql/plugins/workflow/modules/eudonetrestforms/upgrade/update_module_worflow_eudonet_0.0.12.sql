@@ -120,15 +120,15 @@ INSERT INTO task_create_eudonet_data_cf
 (id_attribut, id_task, order_question, eudonet_key, eudonet_key_table, eudonet_key_table_link, eudonet_default_value, eudonet_prefix, eudonet_unique_field)
 VALUES(1058, 34, '', '1408-Motifs de refus', '1400-Dossier de demande', '', '', '', 0);
 
--- ManagewError mapping
-INSERT INTO managewferror_mapping
-(id_config, id_wf_relaunch, action_wf_begin, action_wf_relaunch)
-VALUES(1, 1, 9, 19);
-
 -- ManagewError config
 INSERT INTO managewferror_config
 (id_workflow, id_workflow_mapping, id_config, title)
 VALUES(1, 1, 1, 'CONFIG FOR EUDONET');
+
+-- ManagewError mapping
+INSERT INTO managewferror_mapping
+(id_config, id_wf_relaunch, action_wf_begin, action_wf_relaunch)
+VALUES(1, 1, 9, 19);
 
 -- Droit pour l ecran erreur WF
 DELETE FROM core_user_right
